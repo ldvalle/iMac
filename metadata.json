@@ -1,0 +1,6 @@
+{
+  "name": "reMac",
+  "description": "A modern web application with a fixed layout, toolbar tools, and module navigation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

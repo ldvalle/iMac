@@ -126,7 +126,7 @@ export default function App() {
             {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 text-accent" />}
           </button>
           <h1 className="text-2xl font-extrabold tracking-tighter text-accent">
-            reMac
+            iMAC
           </h1>
         </div>
 

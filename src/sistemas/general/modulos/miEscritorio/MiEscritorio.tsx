@@ -87,7 +87,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex h-[calc(100vh-11rem)] min-h-0 flex-col space-y-4">
       {/* Frame 1: Rol Activo y botón Leer */}
       <h1>Mi Escritorio</h1>
       <div className="frame1 flex items-center gap-4 px-4 py-3 rounded-lg bg-glass border border-glass-border backdrop-blur-sm">
@@ -112,9 +112,9 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
       </div>
 
       {/* Frame 2: Grilla con tareas */}
-      <div className="frame2 flex-1 overflow-auto rounded-lg bg-glass border border-glass-border backdrop-blur-sm">
+      <div className="frame2 min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-lg bg-glass border border-glass-border backdrop-blur-sm">
         <div className="inline-block min-w-full">
-          <table className="w-full border-collapse text-sm">
+          <table className="w-full border-collapse text-sm" >
             <thead>
               <tr className="bg-accent text-black sticky top-0">
                 <th className="border border-glass-border p-3 text-left font-semibold">Nro.Mensaje</th>

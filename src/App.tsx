@@ -235,7 +235,7 @@ function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (role: string) => voi
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8210/macPhoenix/ValidarRol", {
+      const response = await fetch("http://localhost:8210/iMacSrv/xnear/ValidarRol", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

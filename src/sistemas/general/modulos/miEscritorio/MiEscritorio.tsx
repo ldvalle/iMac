@@ -41,7 +41,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
   const loadRoles = async () => {
     setLoadingRoles(true);
     try {
-      const response = await fetch('http://localhost:8210/macPhoenix/ListaRolRepre', {
+      const response = await fetch('http://localhost:8210/iMacSrv/xnear/ListaRolRepre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rol: loggedInRol })
@@ -64,7 +64,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
   const loadTareas = async (rol: string) => {
     setLoadingTareas(true);
     try {
-      const response = await fetch('http://localhost:8210/macPhoenix/ListaTareas', {
+      const response = await fetch('http://localhost:8210/iMacSrv/xnear/ListaTareas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rol })

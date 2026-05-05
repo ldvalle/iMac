@@ -19,10 +19,12 @@ import {
   FileText,
   Menu,
   X,
-  Plus
+  Plus,
+  Wrench
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import MiEscritorio from "./sistemas/general/modulos/miEscritorio/MiEscritorio";
+
 
 type Module = "dashboard" | "users" | "projects" | "documents" | "settings" | "miEscritorio";
 
@@ -77,7 +79,7 @@ export default function App() {
       label: "Mi Escritorio", 
       icon: <LayoutDashboard className="w-5 h-5" />, 
       content: <MiEscritorioView authenticatedRole={authenticatedRole} /> 
-    },    
+    },
     { 
       id: "dashboard", 
       label: "Dashboard", 

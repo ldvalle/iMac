@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Manser from '../../../gestionOT/modulos/manser/Manser';
 
 interface RolResponse {
   rol: string;
@@ -18,7 +19,10 @@ interface MiEscritorioProps {
   authenticatedRole: string;
 }
 
+type MenuModulo = 'miEscritorio' | 'manser';
+
 const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
+  const [activeMenuModulo, setActiveMenuModulo] = useState<MenuModulo>('miEscritorio');
   const [roles, setRoles] = useState<string[]>([]);
   const [selectedRol, setSelectedRol] = useState<string>('');
   const [tareas, setTareas] = useState<Tarea[]>([]);
@@ -88,6 +92,27 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
 
   return (
     <div className="flex h-[calc(100vh-11rem)] min-h-0 flex-col space-y-4">
+      {activeMenuModulo === 'miEscritorio' && (
+        <nav className="flex items-center gap-2 rounded-lg bg-glass border border-glass-border backdrop-blur-sm px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setActiveMenuModulo('manser')}
+            className="rounded-md px-4 py-2 text-sm font-semibold text-text-dim transition-all hover:bg-white/10 hover:text-white"
+          >
+            Manser
+          </button>
+          <button type="button" className="rounded-md px-4 py-2 text-sm font-semibold text-text-dim transition-all hover:bg-white/10 hover:text-white">
+            Retcli
+          </button>
+          <button type="button" className="rounded-md px-4 py-2 text-sm font-semibold text-text-dim transition-all hover:bg-white/10 hover:text-white">
+            Segen
+          </button>
+        </nav>
+      )}
+
+      {activeMenuModulo === 'manser' && <Manser />}
+      {activeMenuModulo === 'miEscritorio' && (
+        <>
       {/* Frame 1: Rol Activo y botón Leer */}
       <h1>Mi Escritorio</h1>
       <div className="frame1 flex items-center gap-4 px-4 py-3 rounded-lg bg-glass border border-glass-border backdrop-blur-sm">
@@ -161,6 +186,8 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
           {loadingTareas ? 'Cargando...' : 'Refrescar'}
         </button>
       </div>
+        </>
+      )}
     </div>
   );
 };

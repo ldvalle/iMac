@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type TabKey = "datosCliente" | "medidores" | "observaciones";
 
@@ -122,6 +122,62 @@ function EmptyCell() {
 
 function Manser() {
   const [activeTab, setActiveTab] = useState<TabKey>("datosCliente");
+  const [motivos, setMotivos] = useState<Array<{ codigo: string; descripcion: string; valor_alf: string }>>([]);
+  const [motivosLoading, setMotivosLoading] = useState(false);
+  const [motivosError, setMotivosError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadMotivos() {
+      setMotivosLoading(true);
+      setMotivosError(null);
+
+      try {
+        const res = await fetch("http://localhost:8210/iMacSrv/gestionOT/getMotivosOT", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ procedimiento: "MANSER" }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data: unknown = await res.json();
+        if (!Array.isArray(data)) {
+          throw new Error("Respuesta inválida");
+        }
+
+        const parsed = data
+          .map((item) => {
+            if (!item || typeof item !== "object") return null;
+            const row = item as Record<string, unknown>;
+            const codigo = typeof row.codigo === "string" ? row.codigo : "";
+            const descripcion = typeof row.descripcion === "string" ? row.descripcion : "";
+            const valor_alf = typeof row.valor_alf === "string" ? row.valor_alf : "";
+            if (!codigo || !descripcion) return null;
+            return { codigo, descripcion, valor_alf };
+          })
+          .filter(Boolean) as Array<{ codigo: string; descripcion: string; valor_alf: string }>;
+
+        setMotivos(parsed);
+      } catch (e) {
+        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        setMotivos([]);
+        setMotivosError("No se pudieron cargar los motivos");
+      } finally {
+        setMotivosLoading(false);
+      }
+    }
+
+    loadMotivos();
+    return () => controller.abort();
+  }, []);
 
   return (
     <div className="flex h-full min-h-0 flex-col space-y-4">
@@ -163,7 +219,25 @@ function Manser() {
               />
             </div>
           </Field>
-          <SelectField id="cmbMotivo" legend="Motivo" />
+          <SelectField id="cmbMotivo" legend="Motivo">
+            {motivosLoading && (
+              <option value="__loading" disabled className="bg-black text-white">
+                Cargando...
+              </option>
+            )}
+            {!motivosLoading && motivosError && (
+              <option value="__error" disabled className="bg-black text-white">
+                {motivosError}
+              </option>
+            )}
+            {!motivosLoading &&
+              !motivosError &&
+              motivos.map((m) => (
+                <option key={m.codigo} value={m.codigo} className="bg-black text-white">
+                  {m.descripcion}
+                </option>
+              ))}
+          </SelectField>
           <SelectField id="cmdFaseMedidor" legend="Tipo Medidor">
             <option value="1" className="bg-black text-white">
               Monofásico

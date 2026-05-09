@@ -81,7 +81,7 @@ function SelectField({ id, legend, children }: { id: string; legend: string; chi
         id={id}
         name={id}
         defaultValue=""
-        className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20"
+        className="min-h-9 min-w-0 w-full max-w-full rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20"
       >
         <option value="" disabled className="bg-black text-white">
           Seleccionar...
@@ -210,16 +210,18 @@ function Manser() {
                 id="txtNroCliente"
                 name="txtNroCliente"
                 type="number"
+                maxLength={10}
+                style={{width: "170px"}}
                 step="1"
                 className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20"
               />
               <span
                 id="lblDigVerifCliente"
-                className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-center text-sm text-text-bright"
+                className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-left text-sm text-text-bright"
               />
             </div>
           </Field>
-          <SelectField id="cmbMotivo" legend="Motivo">
+          <SelectField id="cmbMotivo" legend="Motivo" >
             {motivosLoading && (
               <option value="__loading" disabled className="bg-black text-white">
                 Cargando...
@@ -239,10 +241,10 @@ function Manser() {
               ))}
           </SelectField>
           <SelectField id="cmdFaseMedidor" legend="Tipo Medidor">
-            <option value="1" className="bg-black text-white">
+            <option value="M" className="bg-black text-white">
               Monofásico
             </option>
-            <option value="3" className="bg-black text-white">
+            <option value="T" className="bg-black text-white">
               Trifásico
             </option>
           </SelectField>

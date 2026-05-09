@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 
 type TabKey = "datosCliente" | "medidores" | "observaciones";
 
+interface ManserProps {
+  nroMensaje?: number | string;
+}
+
 interface FieldProps {
   id: string;
   legend: string;
@@ -120,7 +124,7 @@ function EmptyCell() {
   return <div className="hidden lg:block" />;
 }
 
-function Manser() {
+function Manser({ nroMensaje }: ManserProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("datosCliente");
   const [motivos, setMotivos] = useState<Array<{ codigo: string; descripcion: string; valor_alf: string }>>([]);
   const [motivosLoading, setMotivosLoading] = useState(false);
@@ -185,7 +189,14 @@ function Manser() {
 
       <Frame id="frmCabecera" className="px-4 py-3">
         <DataGrid columns={4}>
-          <Field id="lblNroMensaje" legend="Nro.Mensaje" />
+          <Field id="lblNroMensaje" legend="Nro.Mensaje">
+            <span
+              id="lblNroMensaje"
+              className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-sm text-text-bright"
+            >
+              {nroMensaje ?? ""}
+            </span>
+          </Field>
           <Field id="lblRolCreacion" legend="Rol Creación" />
           <Field id="lblRolActual" legend="Rol Actual" />
           <Field id="lblEtapa" legend="Etapa" />
@@ -240,7 +251,7 @@ function Manser() {
                 </option>
               ))}
           </SelectField>
-          <SelectField id="cmdFaseMedidor" legend="Tipo Medidor">
+          <SelectField id="cmbFaseMedidor" legend="Tipo Medidor">
             <option value="M" className="bg-black text-white">
               Monofásico
             </option>

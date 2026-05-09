@@ -26,6 +26,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
   const [roles, setRoles] = useState<string[]>([]);
   const [selectedRol, setSelectedRol] = useState<string>('');
   const [tareas, setTareas] = useState<Tarea[]>([]);
+  const [selectedNroMensaje, setSelectedNroMensaje] = useState<number | string>('');
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingTareas, setLoadingTareas] = useState(false);
 
@@ -90,6 +91,13 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
     loadTareas(selectedRol);
   };
 
+  const handleTareaDoubleClick = (tarea: Tarea) => {
+    if (tarea.proced.trim().toUpperCase() !== 'MANSER') return;
+
+    setSelectedNroMensaje(tarea.mensaje);
+    setActiveMenuModulo('manser');
+  };
+
   return (
     <div className="flex h-[calc(100vh-11rem)] min-h-0 flex-col space-y-4">
       {activeMenuModulo === 'miEscritorio' && (
@@ -110,7 +118,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
         </nav>
       )}
 
-      {activeMenuModulo === 'manser' && <Manser />}
+      {activeMenuModulo === 'manser' && <Manser nroMensaje={selectedNroMensaje} />}
       {activeMenuModulo === 'miEscritorio' && (
         <>
       {/* Frame 1: Rol Activo y botón Leer */}
@@ -160,7 +168,11 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
                 </tr>
               ) : (
                 tareas.map((tarea, index) => (
-                  <tr key={index} className="hover:bg-white/5 transition-colors border-b border-glass-border">
+                  <tr
+                    key={index}
+                    onDoubleClick={() => handleTareaDoubleClick(tarea)}
+                    className="hover:bg-white/5 transition-colors border-b border-glass-border"
+                  >
                     <td className="border border-glass-border p-3 text-text-bright">{tarea.mensaje}</td>
                     <td className="border border-glass-border p-3 text-text-bright">{tarea.referencia}</td>
                     <td className="border border-glass-border p-3 text-text-bright">{tarea.rol_anterior}</td>

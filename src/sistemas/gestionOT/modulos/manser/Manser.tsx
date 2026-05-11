@@ -56,6 +56,8 @@ interface CabeceraManRetValues {
   nroCliente: string;
 }
 
+const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
+
 function Frame({ id, title, children, className = "" }: { id: string; title?: string; children: React.ReactNode; className?: string }) {
   return (
     <section id={id} className={`rounded-lg bg-glass border border-glass-border backdrop-blur-sm ${className}`}>
@@ -267,7 +269,7 @@ function Manser({ nroMensaje }: ManserProps) {
       setMotivosError(null);
 
       try {
-        const res = await fetch("http://localhost:8210/iMacSrv/gestionOT/getMotivosOT", {
+        const res = await fetch(urlBase1 +"getMotivosOT", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -330,7 +332,7 @@ function Manser({ nroMensaje }: ManserProps) {
       setCabeceraError(null);
 
       try {
-        const res = await fetch("http://localhost:8210/iMacSrv/gestionOT/getCabeceraManRet", {
+        const res = await fetch(urlBase1 + "getCabeceraManRet", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

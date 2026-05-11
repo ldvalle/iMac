@@ -24,8 +24,9 @@ interface CabeceraManRetResponse {
   mensaje_xnear: number | null;
   numero_orden: string | null;
   etapa: string | null;
-  fecha_creacion: string | null;
+  fecha_creacion: Date | null;
   rol_creacion: string | null;
+  rol_actual: string | null;
   area: string | null;
   ident_etapa: string | null;
   tema: string | null;
@@ -42,8 +43,9 @@ interface CabeceraManRetValues {
   nroMensaje: string;
   nroOrden: string;
   etapaOperacion: string;
-  fechaOperacion: string;
+  fechaOperacion: Date;
   rolCreacion: string;
+  rolActual: string;
   areaEmisora: string;
   identEtapa: string;
   cmbMotivo: string;
@@ -180,8 +182,9 @@ const emptyCabeceraValues: CabeceraManRetValues = {
   nroMensaje: "",
   nroOrden: "",
   etapaOperacion: "",
-  fechaOperacion: "",
+  fechaOperacion: null as Date | null,
   rolCreacion: "",
+  rolActual: "",
   areaEmisora: "",
   identEtapa: "",
   cmbMotivo: "",
@@ -355,8 +358,9 @@ function Manser({ nroMensaje }: ManserProps) {
             nroMensaje: row.mensaje_xnear == null ? current.nroMensaje : valueToString(row.mensaje_xnear),
             nroOrden: row.numero_orden == null ? current.nroOrden : valueToString(row.numero_orden),
             etapaOperacion: row.etapa == null ? current.etapaOperacion : valueToString(row.etapa),
-            fechaOperacion: row.fecha_creacion == null ? current.fechaOperacion : valueToString(row.fecha_creacion),
+            fechaOperacion: row.fecha_creacion == null ? current.fechaOperacion : new Date(row.fecha_creacion).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }),
             rolCreacion: row.rol_creacion == null ? current.rolCreacion : valueToString(row.rol_creacion),
+            rolActual: row.rol_actual == null ? current.rolActual : valueToString(row.rol_actual),
             areaEmisora: row.area == null ? current.areaEmisora : valueToString(row.area),
             identEtapa: row.ident_etapa == null ? current.identEtapa : valueToString(row.ident_etapa),
             cmbMotivo: row.tema == null ? current.cmbMotivo : motivoSelectValue,
@@ -387,8 +391,8 @@ function Manser({ nroMensaje }: ManserProps) {
         <DataGrid columns={4}>
           <Field id="lblNroMensaje" legend="Nro.Mensaje" value={cabecera.nroMensaje} />
           <Field id="lblRolCreacion" legend="Rol Creación" value={cabecera.rolCreacion} />
-          <Field id="lblRolActual" legend="Rol Actual" />
-          <Field id="lblEtapa" legend="Etapa" value={cabecera.etapaOperacion} />
+          <Field id="lblRolActual" legend="Rol Actual"value={cabecera.rolActual}/>
+          <Field id="lblEtapa" legend="Etapa" value="MODIFICACION" />
         </DataGrid>
       </Frame>
 
@@ -396,7 +400,7 @@ function Manser({ nroMensaje }: ManserProps) {
       <Frame id="frmDataBase" className="px-4 py-4">
         <DataGrid>
           <Field id="lblNroOperacion" legend="Nro.Operación" value={cabecera.nroMensaje} />
-          <Field id="lblEtapaOperacion" legend="Etapa" value={cabecera.identEtapa} />
+          <Field id="lblEtapaOperacion" legend="Etapa" value={cabecera.etapaOperacion} />
           <Field id="dtFechaVto" legend="Vencimiento">
             <input
               id="dtFechaVto"

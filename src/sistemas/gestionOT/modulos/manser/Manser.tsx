@@ -58,6 +58,85 @@ interface CabeceraManRetValues {
 }
 
 //-- Interface solapa Cliente 
+interface ClienteManRetResponse {
+  codigoResultado: string;
+  numero_cliente: number;
+  dv_numero_cliente: string;
+  tipo_empalme: string|null|undefined;
+  potencia_contrato: number|null|undefined;  
+  potencia_inst_fp: number|null|undefined;
+  nombre: string;
+  nom_comuna: string|null;
+  nom_calle: string|null;
+  nom_provincia: string|null;
+  nom_sucursal: string|null;
+  nom_partido: string|null;
+  nro_dir: string|null;
+  piso_dir: string | null;
+  depto_dir: string | null;
+  nom_entre: string | null;
+  nom_entre1: string | null;
+  nom_barrio: string | null;
+  telefono: string | null;
+  cod_postal: number | null;
+  tipo_cliente: string | null;
+  descrip_tipo_cliente: string | null;
+  obs_dir: string | null;
+  info_adic_lectura: string | null;
+  tipo_iva: string | null;
+  tarifa: string | null;
+  rut: string | null;
+  actividad_economic: string | null;
+  cod_propiedad: string | null;
+  tip_doc: string | null;
+  nro_doc: number | null;
+  estado_cobrabilida: string | null;
+  nro_subestacion: string | null;
+  codigo_voltaje: string | null;
+  descrip_voltaje: string | null;
+  acometida: string | null;
+  descrip_acometida: string | null;
+}
+
+interface ClienteManRetValues {
+  codigoResultado: string;
+  numeroCliente: string;
+  dvNumeroCliente: string;
+  tipoEmpalme: string;
+  potenciaContrato: string;
+  potenciaInstFP: string;
+  nombreCliente: string;
+  nomComuna: string;
+  nomCalle: string;
+  nomProvincia: string;
+  nomSucursal: string;
+  nomPartido: string;
+  nroDir: string;
+  pisoDir: string;
+  deptoDir: string;
+  nomEntre: string;
+  nomEntre1: string;
+  nomBarrio: string;
+  telefono: string;
+  codPostal: string;
+  tipoCliente: string;
+  descripTipoCliente: string;
+  obsDir: string;
+  infoAdicLectura: string;
+  tipoIva: string;
+  tarifa: string;
+  rut: string;
+  actividadEconomica: string;
+  codPropiedad: string;
+  tipDoc: string;
+  nroDoc: string;
+  estadoCobrabilida: string;
+  nroSubestacion: string;
+  codigoVoltaje: string;
+  descripVoltaje: string;
+  acometida: string;
+  descripAcometida: string;
+}
 
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
 

@@ -20,6 +20,7 @@ interface TextFieldProps {
   disabled?: boolean;
 }
 
+//-- Interface Cabecera 
 interface CabeceraManRetResponse {
   mensaje_xnear: number | null;
   numero_orden: string | null;
@@ -55,6 +56,8 @@ interface CabeceraManRetValues {
   cmbFaseMedidor: string;
   nroCliente: string;
 }
+
+//-- Interface solapa Cliente 
 
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
 
@@ -537,7 +540,7 @@ function DatosClienteTab() {
       <Field id="lblNombreCliente" legend="Nombre" />
       <Field id="lblTelefono" legend="Telefono" />
       <Field id="lblNombreCalle" legend="Calle" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 w-[350px] ">
         <CompactField id="lblAltura" legend="Nro." />
         <CompactField id="lblPiso" legend="Piso" />
         <CompactField id="lblDepto" legend="Depto" />
@@ -545,20 +548,30 @@ function DatosClienteTab() {
       <Field id="lblEntreCalle1" legend="Entre Calle 1" />
       <Field id="lblEntreCalle2" legend="Entre Calle 2" />
       <Field id="lblSucursal" legend="Sucursal" />
-      <Field id="lblCodPostal" legend="Cod.Postal" />
+      <div className="w-[250px] ">
+        <Field id="lblCodPostal" legend="Cod.Postal" />
+      </div>
       <Field id="lblBarrio" legend="Barrio" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 w-[250px] ">
         <CompactField id="lblPlan" legend="Plan" />
         <CompactField id="lblRadio" legend="Radio" />
       </div>
-      <Field id="lblLocalidad" legend="Localidad" />
-      <Field id="lblCorrelativoRuta" legend="Correlativo Ruta" />
+      <Field id="lblLocalidad" legend="Localidad" /> 
+      <div className="w-[250px] ">
+        <Field id="lblCorrelativoRuta" legend="Correlativo Ruta" /> 
+      </div>
       <Field id="lblPartido" legend="Partido" />
-      <Field id="lblTipoConexion" legend="Tipo conexión" />
+      <div className="w-[250px] ">
+        <Field id="lblTipoConexion" legend="Tipo conexión" />
+      </div>
       <Field id="lblProvincia" legend="Provincia" />
-      <Field id="lblAcometida" legend="Acometida" />
-      <Field id="lblTensionContratada" legend="Tensión Contratada" />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="w-[250px] ">
+        <Field id="lblAcometida" legend="Acometida" />
+      </div>
+      <div className="w-[350px] ">
+        <Field id="lblTensionContratada" legend="Tensión Contratada" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 w-[450px] ">
         <CompactField id="lblCargaContratada" legend="Carga Contratada" />
         <CompactField id="lblCargaConectada" legend="Carga Conectada" />
       </div>

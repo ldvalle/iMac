@@ -100,11 +100,11 @@ interface ClienteManRetResponse {
 
 interface ClienteManRetValues {
   codigoResultado: string;
-  numeroCliente: string;
+  numeroCliente: number;
   dvNumeroCliente: string;
   tipoEmpalme: string;
-  potenciaContrato: string;
-  potenciaInstFP: string;
+  potenciaContrato: number;
+  potenciaInstFP: number;
   nombreCliente: string;
   nomComuna: string;
   nomCalle: string;
@@ -118,7 +118,7 @@ interface ClienteManRetValues {
   nomEntre1: string;
   nomBarrio: string;
   telefono: string;
-  codPostal: string;
+  codPostal: number;
   tipoCliente: string;
   descripTipoCliente: string;
   obsDir: string;
@@ -129,7 +129,7 @@ interface ClienteManRetValues {
   actividadEconomica: string;
   codPropiedad: string;
   tipDoc: string;
-  nroDoc: string;
+  nroDoc: number;
   estadoCobrabilida: string;
   nroSubestacion: string;
   codigoVoltaje: string;
@@ -279,6 +279,46 @@ const emptyCabeceraValues: CabeceraManRetValues = {
   nroCliente: "",
 };
 
+const emptyClienteValues: ClienteManRetValues = {
+  codigoResultado: "",
+  numeroCliente: null,
+  dvNumeroCliente: "",
+  tipoEmpalme: "",
+  potenciaContrato: null,
+  potenciaInstFP: null,
+  nombreCliente: "",
+  nomComuna: "",
+  nomCalle: "",
+  nomProvincia: "",
+  nomSucursal: "",
+  nomPartido: "",
+  nroDir: "",
+  pisoDir: "",
+  deptoDir: "",
+  nomEntre: "",
+  nomEntre1: "",
+  nomBarrio: "",
+  telefono: "",
+  codPostal: null,
+  tipoCliente: "",
+  descripTipoCliente: "",
+  obsDir: "",
+  infoAdicLectura: "",
+  tipoIva: "",
+  tarifa: "",
+  rut: "",
+  actividadEconomica: "",
+  codPropiedad: "",
+  tipDoc: "",
+  nroDoc: null,
+  estadoCobrabilida: "",
+  nroSubestacion: "",
+  codigoVoltaje: "",
+  descripVoltaje: "",
+  acometida: "",
+  descripAcometida: "",
+};
+
 function valueToString(value: string | number | null | undefined) {
   return value === null || value === undefined ? "" : String(value);
 }
@@ -338,6 +378,12 @@ function Manser({ nroMensaje }: ManserProps) {
   });
   const [, setCabeceraLoading] = useState(false);
   const [, setCabeceraError] = useState<string | null>(null);
+  const [cliente, setCliente] = useState<ClienteManRetValues>({
+    ...emptyClienteValues,
+    numeroCliente: Number(nroMensaje),
+  });
+  const [clienteLoading, setClienteLoading] = useState(false);
+  const [clienteError, setClienteError] = useState<string | null>(null);
 
   const nroMensajeNumber = Number(nroMensaje);
   const hasValidNroMensaje = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
@@ -405,9 +451,16 @@ function Manser({ nroMensaje }: ManserProps) {
   }, [nroMensaje]);
 
   useEffect(() => {
+    setCliente({
+      ...emptyClienteValues
+    });
+  }, []);
+
+  useEffect(() => {
     if (!hasValidNroMensaje || motivosLoading || !motivosLoaded) return;
 
     const controller = new AbortController();
+
 
     async function loadCabecera() {
       setCabeceraLoading(true);
@@ -455,6 +508,13 @@ function Manser({ nroMensaje }: ManserProps) {
             nroCliente: row.numero_cliente == null ? current.nroCliente : valueToString(row.numero_cliente),
           };
         });
+
+        if (row.numero_cliente != null) {
+          const nroClienteNumber = Number(row.numero_cliente);
+          if (Number.isFinite(nroClienteNumber)) {
+            await loadCliente(nroClienteNumber);
+          }
+        }
       } catch (e) {
         if ((e as { name?: string } | null)?.name === "AbortError") return;
         setCabeceraError("No se pudo cargar la cabecera");
@@ -463,7 +523,82 @@ function Manser({ nroMensaje }: ManserProps) {
       }
     }
 
-    loadCabecera();
+    async function loadCliente(nroClienteNumber: number) {
+      setClienteLoading(true);
+      setClienteError(null);
+      try {
+        const res = await fetch(urlBase1 + "getClienteManRet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ nroCliente: nroClienteNumber }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data: unknown = await res.json();
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+          throw new Error("Respuesta inválida");
+        }
+
+        const row = data as ClienteManRetResponse;
+        setCliente((current) => {
+          return {
+            ...current,
+            numeroCliente: row.numero_cliente == null ? current.numeroCliente : Number(row.numero_cliente),
+            dvNumeroCliente: row.dv_numero_cliente == null ? current.dvNumeroCliente : valueToString(row.dv_numero_cliente),
+            tipoEmpalme: row.tipo_empalme == null ? current.tipoEmpalme : valueToString(row.tipo_empalme),
+            potenciaContrato: row.potencia_contrato == null ? current.potenciaContrato : Number(row.potencia_contrato),
+            potenciaInstFP: row.potencia_inst_fp == null ? current.potenciaInstFP : Number(row.potencia_inst_fp),
+            nombreCliente: row.nombre == null ? current.nombreCliente : valueToString(row.nombre),
+            nomComuna: row.nom_comuna == null ? current.nomComuna : valueToString(row.nom_comuna),
+            nomCalle: row.nom_calle == null ? current.nomCalle : valueToString(row.nom_calle),
+            nomProvincia: row.nom_provincia == null ? current.nomProvincia : valueToString(row.nom_provincia),
+            nomSucursal: row.nom_sucursal == null ? current.nomSucursal : valueToString(row.nom_sucursal),
+            nomPartido: row.nom_partido == null ? current.nomPartido : valueToString(row.nom_partido),
+            nroDir: row.nro_dir == null ? current.nroDir : valueToString(row.nro_dir),
+            pisoDir: row.piso_dir == null ? current.pisoDir : valueToString(row.piso_dir),
+            deptoDir: row.depto_dir == null ? current.deptoDir : valueToString(row.depto_dir),
+            nomEntre: row.nom_entre == null ? current.nomEntre : valueToString(row.nom_entre),
+            nomEntre1: row.nom_entre1 == null ? current.nomEntre1 : valueToString(row.nom_entre1),
+            nomBarrio: row.nom_barrio == null ? current.nomBarrio : valueToString(row.nom_barrio),
+            telefono: row.telefono == null ? current.telefono : valueToString(row.telefono),
+            codPostal: row.cod_postal == null ? current.codPostal : Number(row.cod_postal),
+            tipoCliente: row.tipo_cliente == null ? current.tipoCliente : valueToString(row.tipo_cliente),
+            descripTipoCliente: row.descrip_tipo_cliente == null ? current.descripTipoCliente : valueToString(row.descrip_tipo_cliente),
+            obsDir: row.obs_dir == null ? current.obsDir : valueToString(row.obs_dir),
+            infoAdicLectura: row.info_adic_lectura == null ? current.infoAdicLectura : valueToString(row.info_adic_lectura),
+            tipoIva: row.tipo_iva == null ? current.tipoIva : valueToString(row.tipo_iva),
+            tarifa: row.tarifa == null ? current.tarifa : valueToString(row.tarifa),
+            rut: row.rut == null ? current.rut : valueToString(row.rut),   
+            actividadEconomica: row.actividad_economic == null ? current.actividadEconomica : valueToString(row.actividad_economic),
+            codPropiedad: row.cod_propiedad == null ? current.codPropiedad : valueToString(row.cod_propiedad),
+            tipDoc: row.tip_doc == null ? current.tipDoc : valueToString(row.tip_doc),
+            nroDoc: row.nro_doc == null ? current.nroDoc : Number(row.nro_doc),
+            estadoCobrabilida: row.estado_cobrabilida == null ? current.estadoCobrabilida : valueToString(row.estado_cobrabilida),
+            nroSubestacion: row.nro_subestacion == null ? current.nroSubestacion : valueToString(row.nro_subestacion),
+            codigoVoltaje: row.codigo_voltaje == null ? current.codigoVoltaje : valueToString(row.codigo_voltaje),
+            descripVoltaje: row.descrip_voltaje == null ? current.descripVoltaje : valueToString(row.descrip_voltaje),
+            acometida: row.acometida == null ? current.acometida : valueToString(row.acometida),
+            descripAcometida: row.descrip_acometida == null ? current.descripAcometida : valueToString(row.descrip_acometida),
+          };
+        });
+      } catch (e) {
+        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        setClienteError("No se pudo cargar el cliente");
+      } finally {
+        setClienteLoading(false);
+      }
+    }
+
+    void loadCabecera();
+    void loadCliente(cabecera.nroCliente);
+
     return () => controller.abort();
   }, [hasValidNroMensaje, motivos, motivosLoaded, motivosLoading, nroMensajeNumber]);
 
@@ -616,7 +751,7 @@ function Manser({ nroMensaje }: ManserProps) {
 function DatosClienteTab() {
   return (
     <DataGrid columns={2}>
-      <Field id="lblNombreCliente" legend="Nombre" />
+      <Field id="lblNombreCliente" legend="Nombre"  />
       <Field id="lblTelefono" legend="Telefono" />
       <Field id="lblNombreCalle" legend="Calle" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 w-[350px] ">

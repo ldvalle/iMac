@@ -378,9 +378,9 @@ function Manser({ nroMensaje }: ManserProps) {
   });
   const [, setCabeceraLoading] = useState(false);
   const [, setCabeceraError] = useState<string | null>(null);
+
   const [cliente, setCliente] = useState<ClienteManRetValues>({
-    ...emptyClienteValues,
-    numeroCliente: Number(nroMensaje),
+    ...emptyClienteValues
   });
   const [clienteLoading, setClienteLoading] = useState(false);
   const [clienteError, setClienteError] = useState<string | null>(null);
@@ -460,7 +460,7 @@ function Manser({ nroMensaje }: ManserProps) {
     if (!hasValidNroMensaje || motivosLoading || !motivosLoaded) return;
 
     const controller = new AbortController();
-
+    let nroClienteNumber=0;
 
     async function loadCabecera() {
       setCabeceraLoading(true);
@@ -510,7 +510,7 @@ function Manser({ nroMensaje }: ManserProps) {
         });
 
         if (row.numero_cliente != null) {
-          const nroClienteNumber = Number(row.numero_cliente);
+          nroClienteNumber = Number(row.numero_cliente);
           if (Number.isFinite(nroClienteNumber)) {
             await loadCliente(nroClienteNumber);
           }
@@ -523,9 +523,10 @@ function Manser({ nroMensaje }: ManserProps) {
       }
     }
 
-    async function loadCliente(nroClienteNumber: number) {
+    async function loadCliente(nroClienteNumber : number) {
       setClienteLoading(true);
       setClienteError(null);
+      
       try {
         const res = await fetch(urlBase1 + "getClienteManRet", {
           method: "POST",
@@ -718,7 +719,7 @@ function Manser({ nroMensaje }: ManserProps) {
         </div>
 
         <div className="p-4">
-          {activeTab === "datosCliente" && <DatosClienteTab />}
+          {activeTab === "datosCliente" && <DatosClienteTab cliente/>}
           {activeTab === "medidores" && <MedidoresTab />}
           {activeTab === "observaciones" && <ObservacionesTab />}
         </div>
@@ -748,10 +749,10 @@ function Manser({ nroMensaje }: ManserProps) {
   );
 }
 
-function DatosClienteTab() {
+function DatosClienteTab(cliente) {
   return (
     <DataGrid columns={2}>
-      <Field id="lblNombreCliente" legend="Nombre"  />
+      <Field id="lblNombreCliente" legend="Nombre" value={cliente.nombreCliente}/>
       <Field id="lblTelefono" legend="Telefono" />
       <Field id="lblNombreCalle" legend="Calle" />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 w-[350px] ">

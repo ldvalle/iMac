@@ -148,6 +148,41 @@ interface ClienteManRetValues {
   descripEmpalme: string;
 }
 
+//-- Interface Solapa Medidores
+interface MedidorRetiradoResponse{
+  codResultado : string;
+  marca_medidor : string;
+  modelo_medidor : string;
+  numero_medidor : number;
+  constante : number|null;
+  ultima_lect_activa : number|null;
+  lectura_terreno : number|null;
+  amperaje : string|null;
+  descripcion : string|null;
+  clave_montri : string|null;
+  ultima_lect_reac : number|null;
+  lectu_terreno_reac : number|null;
+  serie : string|null;
+  numero_precinto : number|null;
+}
+
+interface MedidorRetiradoValues{ 
+  codResultado : string;  
+  marcaMedidorRet : string;  
+  modeloMedidorRet : string;
+  nroMedidorRet : number;
+  constanteRet : number;
+  ultimaLectActivaRet : number;  
+  lecturaTerrenoRet : number;
+  amperajeRet : string;
+  descripcionVoltajeRet : string;  
+  claveMontriRet : string;
+  ultimaLectReacRet : number;
+  lecturaTerrenoReacRet : number;
+  seriePrecintoRet : string;  
+  nroPrecintoRet : number;
+}
+
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
 
 function Frame({ id, title, children, className = "" }: { id: string; title?: string; children: React.ReactNode; className?: string }) {
@@ -334,6 +369,23 @@ const emptyClienteValues: ClienteManRetValues = {
   descripEmpalme: "",
 };
 
+const emptyMedidorRetiradoValues: MedidorRetiradoValues = {
+  codResultado: "",
+  marcaMedidorRet: "",
+  modeloMedidorRet: "",
+  nroMedidorRet: 0,
+  constanteRet: 0,
+  ultimaLectActivaRet: 0,
+  lecturaTerrenoRet: 0,
+  amperajeRet: "",
+  descripcionVoltajeRet: "",
+  claveMontriRet: "",
+  ultimaLectReacRet: 0,
+  lecturaTerrenoReacRet: 0,
+  seriePrecintoRet: "",
+  nroPrecintoRet: 0,
+};
+
 function valueToString(value: string | number | null | undefined) {
   return value === null || value === undefined ? "" : String(value);
 }
@@ -408,7 +460,13 @@ function Manser({ nroMensaje }: ManserProps) {
   });
   const [, setClienteLoading] = useState(false);
   const [, setClienteError] = useState<string | null>(null);
-  
+
+  const [medidorRetirado, setMedidorRetirado] = useState<MedidorRetiradoValues>({
+    ...emptyMedidorRetiradoValues
+  });
+  const [, setMedidorRetiradoLoading] = useState(false);
+  const [, setMedidorRetiradoError] = useState<string | null>(null); 
+
   const nroMensajeNumber = Number(nroMensaje);
   const hasValidNroMensaje = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
 
@@ -548,7 +606,10 @@ function Manser({ nroMensaje }: ManserProps) {
   useEffect(() => {
     if (!cabeceraLoaded) return;
 
+    const nroMensajeNumber = Number(cabecera.nroMensaje);
     const nroClienteNumber = Number(cabecera.nroCliente);
+    const estadoManser = String(cabecera.etapaOperacion);
+
     if (!Number.isFinite(nroClienteNumber) || nroClienteNumber <= 0) {
       setCliente({ ...emptyClienteValues });
       return;
@@ -636,6 +697,61 @@ function Manser({ nroMensaje }: ManserProps) {
     }
 
     void loadCliente();
+
+    async function loadMedidorRetirado() {
+      setMedidorRetiradoLoading(true);
+      setMedidorRetiradoError(null);
+
+      try {
+        const res = await fetch(urlBase1 + "getMedidorClienteManRet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ nroCliente: nroClienteNumber }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data: unknown = await res.json();
+        const row = (Array.isArray(data) ? data[0] : data) as MedidorRetiradoResponse | undefined;
+
+        if (!row || typeof row !== "object") {
+          throw new Error("Respuesta invalida");
+        }
+
+        setMedidorRetirado({ 
+          codResultado: valueToString(row.codResultado),  
+          marcaMedidorRet: valueToString(row.marca_medidor),  
+          modeloMedidorRet: valueToString(row.modelo_medidor),  
+          nroMedidorRet: Number.isFinite(row.numero_medidor) ? row.numero_medidor : 0,  
+          constanteRet: Number.isFinite(row.constante) ? row.constante : 0, 
+          ultimaLectActivaRet: Number.isFinite(row.ultima_lect_activa) ? row.ultima_lect_activa : 0,  
+          lecturaTerrenoRet: Number.isFinite(row.lectura_terreno) ? row.lectura_terreno : 0,  
+          amperajeRet: valueToString(row.amperaje), 
+          descripcionVoltajeRet: valueToString(row.descripcion),  
+          claveMontriRet: valueToString(row.clave_montri),  
+          ultimaLectReacRet: Number.isFinite(row.ultima_lect_reac) ? row.ultima_lect_reac : 0,  
+          lecturaTerrenoReacRet: Number.isFinite(row.lectu_terreno_reac) ? row.lectu_terreno_reac : 0,  
+          seriePrecintoRet: valueToString(row.serie), 
+          nroPrecintoRet: Number.isFinite(row.numero_precinto) ? row.numero_precinto : 0, 
+        });
+
+      } catch (e) { 
+        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        setMedidorRetirado({ ...emptyMedidorRetiradoValues });
+        setMedidorRetiradoError("No se pudieron cargar los datos del medidor retirado");
+
+      } finally {
+        setMedidorRetiradoLoading(false);
+      }
+    }
+
+    void loadMedidorRetirado();
 
     return () => controller.abort();
   }, [cabecera.nroCliente, cabeceraLoaded]);
@@ -757,7 +873,7 @@ function Manser({ nroMensaje }: ManserProps) {
 
         <div className="p-4">
           {activeTab === "datosCliente" && <DatosClienteTab cliente={cliente} />}
-          {activeTab === "medidores" && <MedidoresTab />}
+          {activeTab === "medidores" && <MedidoresTab medidorRetirado={medidorRetirado}/>}
           {activeTab === "observaciones" && <ObservacionesTab />}
         </div>
       </Frame>
@@ -833,7 +949,7 @@ function DatosClienteTab({ cliente }: { cliente: ClienteManRetValues }) {
   );
 }
 
-function MedidoresTab() {
+function MedidoresTab({medidorRetirado}: {medidorRetirado: MedidorRetiradoValues}) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_0.75fr_0.75fr_auto]">
@@ -845,34 +961,34 @@ function MedidoresTab() {
 
       <Frame id="frmMedidorRetira" title="Medidor Retira" className="p-4 pt-0">
         <DataGrid>
-          <Field id="lblNroMedidorReti" legend="Número" />
-          <Field id="lblMarcaMedidorReti" legend="Marca" />
-          <Field id="lblModeloMedidorReti" legend="Modelo" />
-          <Field id="lblLecturaTerrenoActiva" legend="Lectura Terreno Activa" />
-          <Field id="lblUltimaLecturaActiva" legend="Ult.Lectura Activa" />
-          <Field id="lblFactorMultiplicacion" legend="Factor Mult." />
-          <Field id="lblLecturaTerrenoReactiva" legend="Lectura Terreno Reactiva" />
-          <Field id="lblUltimaLecturaReactiva" legend="Ult.Lect.Reactiva" />
-          <Field id="lblPrecintoRetira" legend="Precinto" />
-          <Field id="lblTension" legend="Tensión" />
-          <Field id="lblAmperaje" legend="Amperaje" />
-          <Field id="lblFasesMedidor" legend="Tipo" />
+          <Field id="lblNroMedidorReti" legend="Número" value={medidorRetirado.nroMedidorRet}/>
+          <Field id="lblMarcaMedidorReti" legend="Marca" value={medidorRetirado.marcaMedidorRet} />
+          <Field id="lblModeloMedidorReti" legend="Modelo" value={medidorRetirado.modeloMedidorRet} />
+          <Field id="lblLecturaTerrenoActiva" legend="Lectura Terreno Activa" value={medidorRetirado.lecturaTerrenoRet} />
+          <Field id="lblUltimaLecturaActiva" legend="Ult.Lectura Activa" value={medidorRetirado.ultimaLectActivaRet} />
+          <Field id="lblFactorMultiplicacion" legend="Factor Mult." value={medidorRetirado.constanteRet} />
+          <Field id="lblLecturaTerrenoReactiva" legend="Lectura Terreno Reactiva" value={medidorRetirado.lecturaTerrenoReacRet} />
+          <Field id="lblUltimaLecturaReactiva" legend="Ult.Lect.Reactiva" value={medidorRetirado.ultimaLectReacRet} />
+          <Field id="lblPrecintoRetira" legend="Precinto" value={ medidorRetirado.seriePrecintoRet + '-' + medidorRetirado.nroPrecintoRet } />
+          <Field id="lblTension" legend="Tensión" value={medidorRetirado.descripcionVoltajeRet} />
+          <Field id="lblAmperaje" legend="Amperaje" value={medidorRetirado.amperajeRet} />
+          <Field id="lblFasesMedidor" legend="Tipo" value={medidorRetirado.claveMontriRet} />
         </DataGrid>
       </Frame>
 
       <Frame id="frmMedidorInstala" title="Medidor que se Instala" className="p-4 pt-0">
         <DataGrid>
-          <Field id="lblNroMedidorInstal" legend="Número" />
+          <Field id="lblNroMedidorInstal" legend="Número"  />
           <Field id="lblProyecto" legend="Proyecto" />
           <EmptyCell />
-          <Field id="lblMarcaMedidorInstal" legend="Marca" />
+          <Field id="lblMarcaMedidorInstal" legend="Marca"  />
           <Field id="lblRetiraInstala" legend="Retira/Instala" />
           <EmptyCell />
-          <Field id="lblModeloMedidorInstal" legend="Modelo" />
-          <Field id="lblLecturaInstalActiva" legend="Lect.Instal.Activa" />
+          <Field id="lblModeloMedidorInstal" legend="Modelo"  />
+          <Field id="lblLecturaInstalActiva" legend="Lect.Instal.Activa"  />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <CompactField id="lblLecturaInstalReactiva" legend="Lect.Instal.React." />
-            <CompactField id="lblPrecintoInstal" legend="Precinto" />
+            <CompactField id="lblLecturaInstalReactiva" legend="Lect.Instal.React."  />
+            <CompactField id="lblPrecintoInstal" legend="Precinto"  />
           </div>
         </DataGrid>
       </Frame>

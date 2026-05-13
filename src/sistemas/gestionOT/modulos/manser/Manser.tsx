@@ -62,9 +62,13 @@ interface ClienteManRetResponse {
   codigoResultado: string;
   numero_cliente: number;
   dv_numero_cliente: string;
+  sucursal: string | number | null | undefined;
   tipo_empalme: string|null|undefined;
   potencia_contrato: number|null|undefined;  
   potencia_inst_fp: number|null|undefined;
+  sector: string | null | undefined;
+  zona: string | null | undefined;
+  correlativo_ruta: string | number | null | undefined;
   nombre: string;
   nom_comuna: string|null;
   nom_calle: string|null;
@@ -96,15 +100,20 @@ interface ClienteManRetResponse {
   descrip_voltaje: string | null;
   acometida: string | null;
   descrip_acometida: string | null;
+  descrip_empalme: string | null;
 }
 
 interface ClienteManRetValues {
   codigoResultado: string;
-  numeroCliente: number;
+  numeroCliente: string;
   dvNumeroCliente: string;
   tipoEmpalme: string;
-  potenciaContrato: number;
-  potenciaInstFP: number;
+  potenciaContrato: string;
+  potenciaInstFP: string;
+  sucursal: string;
+  sector: string;
+  zona: string;
+  correlativoRuta: string;
   nombreCliente: string;
   nomComuna: string;
   nomCalle: string;
@@ -118,7 +127,7 @@ interface ClienteManRetValues {
   nomEntre1: string;
   nomBarrio: string;
   telefono: string;
-  codPostal: number;
+  codPostal: string;
   tipoCliente: string;
   descripTipoCliente: string;
   obsDir: string;
@@ -129,13 +138,14 @@ interface ClienteManRetValues {
   actividadEconomica: string;
   codPropiedad: string;
   tipDoc: string;
-  nroDoc: number;
+  nroDoc: string;
   estadoCobrabilida: string;
   nroSubestacion: string;
   codigoVoltaje: string;
   descripVoltaje: string;
   acometida: string;
   descripAcometida: string;
+  descripEmpalme: string;
 }
 
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
@@ -281,11 +291,15 @@ const emptyCabeceraValues: CabeceraManRetValues = {
 
 const emptyClienteValues: ClienteManRetValues = {
   codigoResultado: "",
-  numeroCliente: null,
+  numeroCliente: "",
   dvNumeroCliente: "",
   tipoEmpalme: "",
-  potenciaContrato: null,
-  potenciaInstFP: null,
+  potenciaContrato: "",
+  potenciaInstFP: "",
+  sucursal: "",
+  sector: "",
+  zona: "",
+  correlativoRuta: "",
   nombreCliente: "",
   nomComuna: "",
   nomCalle: "",
@@ -299,7 +313,7 @@ const emptyClienteValues: ClienteManRetValues = {
   nomEntre1: "",
   nomBarrio: "",
   telefono: "",
-  codPostal: null,
+  codPostal: "",
   tipoCliente: "",
   descripTipoCliente: "",
   obsDir: "",
@@ -310,13 +324,14 @@ const emptyClienteValues: ClienteManRetValues = {
   actividadEconomica: "",
   codPropiedad: "",
   tipDoc: "",
-  nroDoc: null,
+  nroDoc: "",
   estadoCobrabilida: "",
   nroSubestacion: "",
   codigoVoltaje: "",
   descripVoltaje: "",
   acometida: "",
   descripAcometida: "",
+  descripEmpalme: "",
 };
 
 function valueToString(value: string | number | null | undefined) {
@@ -366,25 +381,34 @@ function getMotivoSelectValue(
   return selectedMotivo?.codigo ?? "";
 }
 
+function combineSucursal(sucursal: string | number | null | undefined, nombreSucursal: string | null | undefined) {
+  const codigo = valueToString(sucursal).trim();
+  const nombre = valueToString(nombreSucursal).trim();
+  if (codigo && nombre) return `${codigo}-${nombre}`;
+  return codigo || nombre;
+}
+
 function Manser({ nroMensaje }: ManserProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("datosCliente");
   const [motivos, setMotivos] = useState<Array<{ codigo: string; descripcion: string; valor_alf: string }>>([]);
   const [motivosLoading, setMotivosLoading] = useState(false);
   const [motivosLoaded, setMotivosLoaded] = useState(false);
   const [motivosError, setMotivosError] = useState<string | null>(null);
+
   const [cabecera, setCabecera] = useState<CabeceraManRetValues>({
     ...emptyCabeceraValues,
     nroMensaje: valueToString(nroMensaje),
   });
   const [, setCabeceraLoading] = useState(false);
   const [, setCabeceraError] = useState<string | null>(null);
+  const [cabeceraLoaded, setCabeceraLoaded] = useState(false);
 
   const [cliente, setCliente] = useState<ClienteManRetValues>({
     ...emptyClienteValues
   });
-  const [clienteLoading, setClienteLoading] = useState(false);
-  const [clienteError, setClienteError] = useState<string | null>(null);
-
+  const [, setClienteLoading] = useState(false);
+  const [, setClienteError] = useState<string | null>(null);
+  
   const nroMensajeNumber = Number(nroMensaje);
   const hasValidNroMensaje = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
 
@@ -448,22 +472,19 @@ function Manser({ nroMensaje }: ManserProps) {
       ...emptyCabeceraValues,
       nroMensaje: valueToString(nroMensaje),
     });
+    setCabeceraLoaded(false);
+    setCliente({ ...emptyClienteValues });
   }, [nroMensaje]);
 
-  useEffect(() => {
-    setCliente({
-      ...emptyClienteValues
-    });
-  }, []);
 
   useEffect(() => {
     if (!hasValidNroMensaje || motivosLoading || !motivosLoaded) return;
 
     const controller = new AbortController();
-    let nroClienteNumber=0;
 
     async function loadCabecera() {
       setCabeceraLoading(true);
+      setCabeceraLoaded(false);
       setCabeceraError(null);
 
       try {
@@ -508,27 +529,39 @@ function Manser({ nroMensaje }: ManserProps) {
             nroCliente: row.numero_cliente == null ? current.nroCliente : valueToString(row.numero_cliente),
           };
         });
+        setCabeceraLoaded(true);
 
-        if (row.numero_cliente != null) {
-          nroClienteNumber = Number(row.numero_cliente);
-          if (Number.isFinite(nroClienteNumber)) {
-            await loadCliente(nroClienteNumber);
-          }
-        }
       } catch (e) {
         if ((e as { name?: string } | null)?.name === "AbortError") return;
         setCabeceraError("No se pudo cargar la cabecera");
+        setCabeceraLoaded(false);
       } finally {
         setCabeceraLoading(false);
       }
     }
 
-    async function loadCliente(nroClienteNumber : number) {
+    void loadCabecera();
+
+    return () => controller.abort();
+  }, [hasValidNroMensaje, motivos, motivosLoaded, motivosLoading, nroMensajeNumber]);
+
+  useEffect(() => {
+    if (!cabeceraLoaded) return;
+
+    const nroClienteNumber = Number(cabecera.nroCliente);
+    if (!Number.isFinite(nroClienteNumber) || nroClienteNumber <= 0) {
+      setCliente({ ...emptyClienteValues });
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadCliente() {
       setClienteLoading(true);
       setClienteError(null);
-      
+
       try {
-        const res = await fetch(urlBase1 + "getClienteManRet", {
+        const res = await fetch(urlBase1 + "getDataClienteManRet", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -543,65 +576,69 @@ function Manser({ nroMensaje }: ManserProps) {
         }
 
         const data: unknown = await res.json();
-        if (!data || typeof data !== "object" || Array.isArray(data)) {
-          throw new Error("Respuesta inválida");
+        const row = (Array.isArray(data) ? data[0] : data) as ClienteManRetResponse | undefined;
+
+        if (!row || typeof row !== "object") {
+          throw new Error("Respuesta invalida");
         }
 
-        const row = data as ClienteManRetResponse;
-        setCliente((current) => {
-          return {
-            ...current,
-            numeroCliente: row.numero_cliente == null ? current.numeroCliente : Number(row.numero_cliente),
-            dvNumeroCliente: row.dv_numero_cliente == null ? current.dvNumeroCliente : valueToString(row.dv_numero_cliente),
-            tipoEmpalme: row.tipo_empalme == null ? current.tipoEmpalme : valueToString(row.tipo_empalme),
-            potenciaContrato: row.potencia_contrato == null ? current.potenciaContrato : Number(row.potencia_contrato),
-            potenciaInstFP: row.potencia_inst_fp == null ? current.potenciaInstFP : Number(row.potencia_inst_fp),
-            nombreCliente: row.nombre == null ? current.nombreCliente : valueToString(row.nombre),
-            nomComuna: row.nom_comuna == null ? current.nomComuna : valueToString(row.nom_comuna),
-            nomCalle: row.nom_calle == null ? current.nomCalle : valueToString(row.nom_calle),
-            nomProvincia: row.nom_provincia == null ? current.nomProvincia : valueToString(row.nom_provincia),
-            nomSucursal: row.nom_sucursal == null ? current.nomSucursal : valueToString(row.nom_sucursal),
-            nomPartido: row.nom_partido == null ? current.nomPartido : valueToString(row.nom_partido),
-            nroDir: row.nro_dir == null ? current.nroDir : valueToString(row.nro_dir),
-            pisoDir: row.piso_dir == null ? current.pisoDir : valueToString(row.piso_dir),
-            deptoDir: row.depto_dir == null ? current.deptoDir : valueToString(row.depto_dir),
-            nomEntre: row.nom_entre == null ? current.nomEntre : valueToString(row.nom_entre),
-            nomEntre1: row.nom_entre1 == null ? current.nomEntre1 : valueToString(row.nom_entre1),
-            nomBarrio: row.nom_barrio == null ? current.nomBarrio : valueToString(row.nom_barrio),
-            telefono: row.telefono == null ? current.telefono : valueToString(row.telefono),
-            codPostal: row.cod_postal == null ? current.codPostal : Number(row.cod_postal),
-            tipoCliente: row.tipo_cliente == null ? current.tipoCliente : valueToString(row.tipo_cliente),
-            descripTipoCliente: row.descrip_tipo_cliente == null ? current.descripTipoCliente : valueToString(row.descrip_tipo_cliente),
-            obsDir: row.obs_dir == null ? current.obsDir : valueToString(row.obs_dir),
-            infoAdicLectura: row.info_adic_lectura == null ? current.infoAdicLectura : valueToString(row.info_adic_lectura),
-            tipoIva: row.tipo_iva == null ? current.tipoIva : valueToString(row.tipo_iva),
-            tarifa: row.tarifa == null ? current.tarifa : valueToString(row.tarifa),
-            rut: row.rut == null ? current.rut : valueToString(row.rut),   
-            actividadEconomica: row.actividad_economic == null ? current.actividadEconomica : valueToString(row.actividad_economic),
-            codPropiedad: row.cod_propiedad == null ? current.codPropiedad : valueToString(row.cod_propiedad),
-            tipDoc: row.tip_doc == null ? current.tipDoc : valueToString(row.tip_doc),
-            nroDoc: row.nro_doc == null ? current.nroDoc : Number(row.nro_doc),
-            estadoCobrabilida: row.estado_cobrabilida == null ? current.estadoCobrabilida : valueToString(row.estado_cobrabilida),
-            nroSubestacion: row.nro_subestacion == null ? current.nroSubestacion : valueToString(row.nro_subestacion),
-            codigoVoltaje: row.codigo_voltaje == null ? current.codigoVoltaje : valueToString(row.codigo_voltaje),
-            descripVoltaje: row.descrip_voltaje == null ? current.descripVoltaje : valueToString(row.descrip_voltaje),
-            acometida: row.acometida == null ? current.acometida : valueToString(row.acometida),
-            descripAcometida: row.descrip_acometida == null ? current.descripAcometida : valueToString(row.descrip_acometida),
-          };
+        setCliente({
+          codigoResultado: valueToString(row.codigoResultado),
+          numeroCliente: valueToString(row.numero_cliente),
+          dvNumeroCliente: valueToString(row.dv_numero_cliente),
+          tipoEmpalme: valueToString(row.tipo_empalme),
+          potenciaContrato: valueToString(row.potencia_contrato),
+          potenciaInstFP: valueToString(row.potencia_inst_fp),
+          sucursal: combineSucursal(row.sucursal, row.nom_sucursal),
+          sector: valueToString(row.sector),
+          zona: valueToString(row.zona),
+          correlativoRuta: valueToString(row.correlativo_ruta),
+          nombreCliente: valueToString(row.nombre),
+          nomComuna: valueToString(row.nom_comuna),
+          nomCalle: valueToString(row.nom_calle),
+          nomProvincia: valueToString(row.nom_provincia),
+          nomSucursal: valueToString(row.nom_sucursal),
+          nomPartido: valueToString(row.nom_partido),
+          nroDir: valueToString(row.nro_dir),
+          pisoDir: valueToString(row.piso_dir),
+          deptoDir: valueToString(row.depto_dir),
+          nomEntre: valueToString(row.nom_entre),
+          nomEntre1: valueToString(row.nom_entre1),
+          nomBarrio: valueToString(row.nom_barrio),
+          telefono: valueToString(row.telefono),
+          codPostal: valueToString(row.cod_postal),
+          tipoCliente: valueToString(row.tipo_cliente),
+          descripTipoCliente: valueToString(row.descrip_tipo_cliente),
+          obsDir: valueToString(row.obs_dir),
+          infoAdicLectura: valueToString(row.info_adic_lectura),
+          tipoIva: valueToString(row.tipo_iva),
+          tarifa: valueToString(row.tarifa),
+          rut: valueToString(row.rut),
+          actividadEconomica: valueToString(row.actividad_economic),
+          codPropiedad: valueToString(row.cod_propiedad),
+          tipDoc: valueToString(row.tip_doc),
+          nroDoc: valueToString(row.nro_doc),
+          estadoCobrabilida: valueToString(row.estado_cobrabilida),
+          nroSubestacion: valueToString(row.nro_subestacion),
+          codigoVoltaje: valueToString(row.codigo_voltaje),
+          descripVoltaje: valueToString(row.descrip_voltaje),
+          acometida: valueToString(row.acometida),
+          descripAcometida: valueToString(row.descrip_acometida),
+          descripEmpalme: valueToString(row.descrip_empalme),
         });
       } catch (e) {
         if ((e as { name?: string } | null)?.name === "AbortError") return;
-        setClienteError("No se pudo cargar el cliente");
+        setCliente({ ...emptyClienteValues });
+        setClienteError("No se pudieron cargar los datos del cliente");
       } finally {
         setClienteLoading(false);
       }
     }
 
-    void loadCabecera();
-    void loadCliente(cabecera.nroCliente);
+    void loadCliente();
 
     return () => controller.abort();
-  }, [hasValidNroMensaje, motivos, motivosLoaded, motivosLoading, nroMensajeNumber]);
+  }, [cabecera.nroCliente, cabeceraLoaded]);
 
   return (
     <div className="flex h-full min-h-0 flex-col space-y-4">
@@ -719,7 +756,7 @@ function Manser({ nroMensaje }: ManserProps) {
         </div>
 
         <div className="p-4">
-          {activeTab === "datosCliente" && <DatosClienteTab cliente/>}
+          {activeTab === "datosCliente" && <DatosClienteTab cliente={cliente} />}
           {activeTab === "medidores" && <MedidoresTab />}
           {activeTab === "observaciones" && <ObservacionesTab />}
         </div>
@@ -749,49 +786,49 @@ function Manser({ nroMensaje }: ManserProps) {
   );
 }
 
-function DatosClienteTab(cliente) {
+function DatosClienteTab({ cliente }: { cliente: ClienteManRetValues }) {
   return (
     <DataGrid columns={2}>
-      <Field id="lblNombreCliente" legend="Nombre" value={cliente.nombreCliente}/>
-      <Field id="lblTelefono" legend="Telefono" />
-      <Field id="lblNombreCalle" legend="Calle" />
+      <Field id="lblNombreCliente" legend="Nombre" value={cliente.nombreCliente} />
+      <Field id="lblTelefono" legend="Telefono" value={cliente.telefono} />
+      <Field id="lblNombreCalle" legend="Calle" value={cliente.nomCalle} />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 w-[350px] ">
-        <CompactField id="lblAltura" legend="Nro." />
-        <CompactField id="lblPiso" legend="Piso" />
-        <CompactField id="lblDepto" legend="Depto" />
+        <CompactField id="lblAltura" legend="Nro." value={cliente.nroDir} />
+        <CompactField id="lblPiso" legend="Piso" value={cliente.pisoDir} />
+        <CompactField id="lblDepto" legend="Depto" value={cliente.deptoDir} />
       </div>
-      <Field id="lblEntreCalle1" legend="Entre Calle 1" />
-      <Field id="lblEntreCalle2" legend="Entre Calle 2" />
-      <Field id="lblSucursal" legend="Sucursal" />
+      <Field id="lblEntreCalle1" legend="Entre Calle 1" value={cliente.nomEntre} />
+      <Field id="lblEntreCalle2" legend="Entre Calle 2" value={cliente.nomEntre1} />
+      <Field id="lblSucursal" legend="Sucursal" value={cliente.sucursal} />
       <div className="w-[250px] ">
-        <Field id="lblCodPostal" legend="Cod.Postal" />
+        <Field id="lblCodPostal" legend="Cod.Postal" value={cliente.codPostal} />
       </div>
-      <Field id="lblBarrio" legend="Barrio" />
+      <Field id="lblBarrio" legend="Barrio" value={cliente.nomBarrio} />
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 w-[250px] ">
-        <CompactField id="lblPlan" legend="Plan" />
-        <CompactField id="lblRadio" legend="Radio" />
+        <CompactField id="lblPlan" legend="Plan" value={cliente.sector} />
+        <CompactField id="lblRadio" legend="Radio" value={cliente.zona} />
       </div>
-      <Field id="lblLocalidad" legend="Localidad" /> 
+      <Field id="lblLocalidad" legend="Localidad" value={cliente.nomComuna} /> 
       <div className="w-[250px] ">
-        <Field id="lblCorrelativoRuta" legend="Correlativo Ruta" /> 
+        <Field id="lblCorrelativoRuta" legend="Correlativo Ruta" value={cliente.correlativoRuta} /> 
       </div>
-      <Field id="lblPartido" legend="Partido" />
+      <Field id="lblPartido" legend="Partido" value={cliente.nomPartido} />
       <div className="w-[250px] ">
-        <Field id="lblTipoConexion" legend="Tipo conexión" />
+        <Field id="lblTipoConexion" legend="Tipo conexión" value={cliente.tipoEmpalme} />
       </div>
-      <Field id="lblProvincia" legend="Provincia" />
+      <Field id="lblProvincia" legend="Provincia" value={cliente.nomProvincia} />
       <div className="w-[250px] ">
-        <Field id="lblAcometida" legend="Acometida" />
+        <Field id="lblAcometida" legend="Acometida" value={cliente.descripAcometida} />
       </div>
       <div className="w-[350px] ">
-        <Field id="lblTensionContratada" legend="Tensión Contratada" />
+        <Field id="lblTensionContratada" legend="Tensión Contratada" value={cliente.descripVoltaje} />
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 w-[450px] ">
-        <CompactField id="lblCargaContratada" legend="Carga Contratada" />
-        <CompactField id="lblCargaConectada" legend="Carga Conectada" />
+        <CompactField id="lblCargaContratada" legend="Carga Contratada" value={cliente.potenciaContrato} />
+        <CompactField id="lblCargaConectada" legend="Carga Conectada" value={cliente.potenciaInstFP} />
       </div>
-      <Field id="lblCentroTransformacion" legend="Centro Transformación" />
-      <Field id="lblEmpalme" legend="Empalme" />
+      <Field id="lblCentroTransformacion" legend="Centro Transformación" value={cliente.nroSubestacion} />
+      <Field id="lblEmpalme" legend="Empalme" value={cliente.descripEmpalme} />
     </DataGrid>
   );
 }

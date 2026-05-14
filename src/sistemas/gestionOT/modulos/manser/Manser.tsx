@@ -200,7 +200,7 @@ function Frame({ id, title, children, className = "" }: { id: string; title?: st
 
 function Field({ id, legend, value, children }: FieldProps) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(7.5rem,auto)_1fr] items-center gap-2">
+    <div className="grid min-w-0 grid-cols-[minmax(4.5rem,auto)_1fr] items-center gap-2">
       <label htmlFor={id} className="text-xs font-semibold text-text-dim">
         {legend}
       </label>
@@ -761,11 +761,24 @@ function Manser({ nroMensaje }: ManserProps) {
       <h1>Mantenimiento de Servicio</h1>
 
       <Frame id="frmCabecera" className="px-4 py-3">
-        <DataGrid columns={4}>
+        <DataGrid columns={5} >
+          <div className="flex items-start justify-between">
+          <div className="w-[180px]"> 
           <Field id="lblNroMensaje" legend="Nro.Mensaje" value={cabecera.nroMensaje} />
+          </div>
+          <div className="w-[250px] ">
           <Field id="lblRolCreacion" legend="Rol Creación" value={cabecera.rolCreacion} />
+          </div>
+          <div className="w-[250px]">
           <Field id="lblRolActual" legend="Rol Actual"value={cabecera.rolActual}/>
+          </div>
+          <div className="w-[200px]">
           <Field id="lblEtapa" legend="Etapa" value="MODIFICACION" />
+          </div>
+          <div className="w-[180px]">
+          <Field id="lblCasoSF" legend="Caso SF" value={cabecera.nroMensaje} />
+          </div>
+          </div>
         </DataGrid>
       </Frame>
 

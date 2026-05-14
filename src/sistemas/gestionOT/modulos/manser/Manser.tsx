@@ -38,6 +38,7 @@ interface CabeceraManRetResponse {
   fecha_vto: string | null;
   tipo_trabajo: string | null;
   numero_cliente: number | null;
+  sfc_caso: number | null;
 }
 
 interface CabeceraManRetValues {
@@ -55,6 +56,7 @@ interface CabeceraManRetValues {
   fechaVto: string;
   cmbFaseMedidor: string;
   nroCliente: string;
+  sfcCaso: number;
 }
 
 //-- Interface solapa Cliente 
@@ -322,6 +324,7 @@ const emptyCabeceraValues: CabeceraManRetValues = {
   fechaVto: "",
   cmbFaseMedidor: "",
   nroCliente: "",
+  sfcCaso: 0,
 };
 
 const emptyClienteValues: ClienteManRetValues = {
@@ -585,6 +588,7 @@ function Manser({ nroMensaje }: ManserProps) {
             fechaVto: row.fecha_vto == null ? current.fechaVto : toDateInputValue(row.fecha_vto),
             cmbFaseMedidor: row.tipo_trabajo == null ? current.cmbFaseMedidor : getFaseMedidorValue(row.tipo_trabajo),
             nroCliente: row.numero_cliente == null ? current.nroCliente : valueToString(row.numero_cliente),
+            sfcCaso: row.sfc_caso == null ? current.sfcCaso : Number.isFinite(row.sfc_caso) ? row.sfc_caso : 0,
           };
         });
         setCabeceraLoaded(true);
@@ -776,7 +780,7 @@ function Manser({ nroMensaje }: ManserProps) {
           <Field id="lblEtapa" legend="Etapa" value="MODIFICACION" />
           </div>
           <div className="w-[180px]">
-          <Field id="lblCasoSF" legend="Caso SF" value={cabecera.nroMensaje} />
+          <Field id="lblCasoSF" legend="Caso SF" value={cabecera.sfcCaso} />
           </div>
           </div>
         </DataGrid>

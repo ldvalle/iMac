@@ -207,7 +207,7 @@ function Field({ id, legend, value, children }: FieldProps) {
       {children ?? (
         <span
           id={id}
-          className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-sm text-text-bright"
+          className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-xs text-text-bright"
         >
           {value ?? ""}
         </span>
@@ -225,7 +225,7 @@ function CompactField({ id, legend, value, children }: FieldProps) {
       {children ?? (
         <span
           id={id}
-          className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-sm text-text-bright"
+          className="min-h-9 rounded-md border border-glass-border bg-black/30 px-3 py-2 text-xs text-text-bright"
         >
           {value ?? ""}
         </span>
@@ -242,7 +242,7 @@ function InputField({ id, legend, type = "text", disabled = false }: TextFieldPr
         name={id}
         type={type}
         disabled={disabled}
-        className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70"
+        className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-xs text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70"
       />
     </Field>
   );
@@ -268,7 +268,7 @@ function SelectField({
         name={id}
         value={value ?? ""}
         onChange={onChange ?? (() => {})}
-        className="min-h-9 min-w-0 w-full max-w-full rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20"
+        className="min-h-9 min-w-0 w-full max-w-full rounded-md border border-glass-border bg-black/50 px-3 py-2 text-xs text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20"
       >
         <option value="" disabled className="bg-black text-white">
           Seleccionar...
@@ -300,7 +300,7 @@ function DataGrid({ children, columns = 3 }: { children: React.ReactNode; column
     4: "lg:grid-cols-4",
   }[columns];
 
-  return <div className={`grid grid-cols-1 gap-3 ${columnClass}`}>{children}</div>;
+  return <div className={`grid grid-cols-1 gap-1 ${columnClass}`}>{children}</div>;
 }
 
 function EmptyCell() {
@@ -933,7 +933,7 @@ function DatosClienteTab({ cliente }: { cliente: ClienteManRetValues }) {
         <Field id="lblTipoConexion" legend="Tipo conexión" value={cliente.tipoEmpalme} />
       </div>
       <Field id="lblProvincia" legend="Provincia" value={cliente.nomProvincia} />
-      <div className="w-[250px] ">
+      <div className="w-[450px] ">
         <Field id="lblAcometida" legend="Acometida" value={cliente.descripAcometida} />
       </div>
       <div className="w-[350px] ">

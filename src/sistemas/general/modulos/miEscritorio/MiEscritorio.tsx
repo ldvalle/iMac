@@ -124,13 +124,13 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
       {/* Frame 1: Rol Activo y botón Leer */}
       <h1>Mi Escritorio</h1>
       <div className="frame1 flex items-center gap-4 px-4 py-3 rounded-lg bg-glass border border-glass-border backdrop-blur-sm">
-        <label htmlFor="rolSelect" className="text-sm font-semibold text-text-bright tracking-tight whitespace-nowrap">Rol Activo:</label>
+        <label htmlFor="rolSelect" className="text-xs font-semibold text-text-bright tracking-tight whitespace-nowrap">Rol Activo:</label>
         <select
           id="rolSelect"
           value={selectedRol}
           onChange={(e) => setSelectedRol(e.target.value)}
           disabled={loadingRoles}
-          className="px-3 py-2 rounded-md bg-black/50 border border-glass-border text-white text-sm font-medium focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all disabled:opacity-50"
+          className="px-3 py-2 rounded-md bg-black/50 border border-glass-border text-white text-xs font-medium focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all disabled:opacity-50"
         >
           <option value="" disabled className="bg-black text-white">Seleccionar rol...</option>
           {roles.map(rol => <option key={rol} value={rol} className="bg-black text-white">{rol}</option>)}
@@ -138,7 +138,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
         <button
           onClick={handleLeer}
           disabled={loadingTareas}
-          className="px-4 py-2 bg-accent text-black font-semibold rounded-md text-sm transition-all hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-accent text-black font-semibold rounded-md text-xs transition-all hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Leer
         </button>
@@ -147,7 +147,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
       {/* Frame 2: Grilla con tareas */}
       <div className="frame2 min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-lg bg-glass border border-glass-border backdrop-blur-sm">
         <div className="inline-block min-w-full">
-          <table className="w-full border-collapse text-sm" >
+          <table className="w-full border-collapse text-xs" >
             <thead>
               <tr className="bg-accent text-black sticky top-0">
                 <th className="border border-glass-border p-3 text-left font-semibold">Nro.Mensaje</th>

@@ -1,3 +1,4 @@
+import { number } from "motion";
 import React, { useEffect, useState } from "react";
 
 type TabKey = "datosCliente" | "medidores" | "observaciones";
@@ -59,7 +60,7 @@ interface CabeceraManRetValues {
   sfcCaso: number;
 }
 
-//-- Interface solapa Cliente 
+//-- Interface SOLAPA CLIENTE
 interface ClienteManRetResponse {
   codigoResultado: string;
   numero_cliente: number;
@@ -150,7 +151,8 @@ interface ClienteManRetValues {
   descripEmpalme: string;
 }
 
-//-- Interface Solapa Medidores
+//-- Interface SOLAPA MEDIDORES
+//-- Medidor retirado o a retirar
 interface MedidorRetiradoResponse{
   codResultado : string;
   marca_medidor : string;
@@ -183,6 +185,54 @@ interface MedidorRetiradoValues{
   lecturaTerrenoReacRet : number;
   seriePrecintoRet : string;  
   nroPrecintoRet : number;
+}
+
+//-- Medidor Instalado 
+interface MedidorInstaladoResponse{
+    fecha_ejecucion : string;
+    otf_hora_inicio : string;
+    otf_hora_final : string;
+    otf_lect_retiro : number | null;
+    otf_lect_instal : number | null;
+    lectu_instal_reac : number | null;
+    otf_med_distinto : string | null;
+    otf_modifica_red : string | null;
+    otf_proyecto : string | null;
+    cod_ejecutor : string | null;
+    nombre_ejecutor : string | null;
+    numero_med_ant : number | null;
+    marca_med_ant : string | null;
+    modelo_med_ant : string | null;
+    numero_med_coloca : number | null;
+    marca_med_coloca : string | null;
+    modelo_med_coloca : string | null;
+    serie_prec_retira : string | null;
+    nro_prec_retira : number | null;
+    serie_prec_coloca : string | null;
+    nro_prec_coloca : number | null;
+}
+
+interface MedidorInstaladoValues{
+    fechaEjecucion : string;
+    otfHoraInicio : string;
+    otfHoraFinal : string;
+    otfLectRetiro : number | null;
+    otfLectInstal : number | null;
+    lectuInstalReac : number | null;
+    otfMedDistinto : string | null;
+    otfModificaRed : string | null;
+    otfProyecto : string | null;
+    codEjecutor : string | null;
+    nombreEjecutor : string | null;
+    numeroMedAnt : number | null;
+    marcaMedAnt : string | null;
+    modeloMedAnt : string | null;
+    numeroMedColoca : number | null;
+    marcaMedColoca : string | null;
+    modeloMedColoca : string | null;
+    seriePrecRetira : string | null;
+    nroPrecRetira : number | null;
+    seriePrecColoca : string | null;
 }
 
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
@@ -706,44 +756,97 @@ function Manser({ nroMensaje }: ManserProps) {
       setMedidorRetiradoLoading(true);
       setMedidorRetiradoError(null);
 
+      let endPointMedidorRetirado = "";
+      var sJson;
+
+      if(estadoManser.trim().toUpperCase() === "FINALIZADO" || estadoManser.trim().toUpperCase() === "FINALIZADA"){
+        endPointMedidorRetirado = "getMedidorRetirado";
+        //sJson = JSON.stringify({ nroMensaje: nroMensajeNumber, nroCliente: nroClienteNumber });
+        sJson = { nroMensaje: nroMensajeNumber, nroCliente: nroClienteNumber };
+      }else{
+        endPointMedidorRetirado = "getMedidorClienteManRet";
+        //sJson = JSON.stringify({ nroMensaje: nroMensajeNumber });
+        sJson = { nroMensaje: nroMensajeNumber };
+      }
+
       try {
-        const res = await fetch(urlBase1 + "getMedidorClienteManRet", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ nroCliente: nroClienteNumber }),
-          signal: controller.signal,
-        });
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+        if(estadoManser.trim().toUpperCase() === "FINALIZADO" || estadoManser.trim().toUpperCase() === "FINALIZADA"){
+          const res = await fetch(urlBase1 + endPointMedidorRetirado, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ nroCliente: nroClienteNumber }),
+            signal: controller.signal,
+          });
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+
+          const data: unknown = await res.json();
+          const row = (Array.isArray(data) ? data[0] : data) as MedidorRetiradoResponse | undefined;
+
+          if (!row || typeof row !== "object") {
+            throw new Error("Respuesta invalida");
+          }
+          setMedidorRetirado({ 
+            codResultado: valueToString(row.codResultado),  
+            marcaMedidorRet: valueToString(row.marca_medidor),  
+            modeloMedidorRet: valueToString(row.modelo_medidor),  
+            nroMedidorRet: Number.isFinite(row.numero_medidor) ? row.numero_medidor : 0,  
+            constanteRet: Number.isFinite(row.constante) ? row.constante : 0, 
+            ultimaLectActivaRet: Number.isFinite(row.ultima_lect_activa) ? row.ultima_lect_activa : 0,  
+            lecturaTerrenoRet: Number.isFinite(row.lectura_terreno) ? row.lectura_terreno : 0,  
+            amperajeRet: valueToString(row.amperaje), 
+            descripcionVoltajeRet: valueToString(row.descripcion),  
+            claveMontriRet: valueToString(row.clave_montri),  
+            ultimaLectReacRet: Number.isFinite(row.ultima_lect_reac) ? row.ultima_lect_reac : 0,  
+            lecturaTerrenoReacRet: Number.isFinite(row.lectu_terreno_reac) ? row.lectu_terreno_reac : 0,  
+            seriePrecintoRet: valueToString(row.serie), 
+            nroPrecintoRet: Number.isFinite(row.numero_precinto) ? row.numero_precinto : 0, 
+          });
+
+
+        }else{
+          const res = await fetch(urlBase1 + endPointMedidorRetirado, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ nroCliente: nroClienteNumber, nroMensaje: nroMensajeNumber }),
+            signal: controller.signal,
+          });
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+
+          const data: unknown = await res.json();
+          const row = (Array.isArray(data) ? data[0] : data) as MedidorRetiradoResponse | undefined;
+
+          if (!row || typeof row !== "object") {
+            throw new Error("Respuesta invalida");
+          }        
+          setMedidorRetirado({ 
+            codResultado: valueToString(row.codResultado),  
+            marcaMedidorRet: valueToString(row.marca_medidor),  
+            modeloMedidorRet: valueToString(row.modelo_medidor),  
+            nroMedidorRet: Number.isFinite(row.numero_medidor) ? row.numero_medidor : 0,  
+            constanteRet: Number.isFinite(row.constante) ? row.constante : 0, 
+            ultimaLectActivaRet: Number.isFinite(row.ultima_lect_activa) ? row.ultima_lect_activa : 0,  
+            lecturaTerrenoRet: Number.isFinite(row.lectura_terreno) ? row.lectura_terreno : 0,  
+            amperajeRet: valueToString(row.amperaje), 
+            descripcionVoltajeRet: valueToString(row.descripcion),  
+            claveMontriRet: valueToString(row.clave_montri),  
+            ultimaLectReacRet: Number.isFinite(row.ultima_lect_reac) ? row.ultima_lect_reac : 0,  
+            lecturaTerrenoReacRet: Number.isFinite(row.lectu_terreno_reac) ? row.lectu_terreno_reac : 0,  
+            seriePrecintoRet: valueToString(row.serie), 
+            nroPrecintoRet: Number.isFinite(row.numero_precinto) ? row.numero_precinto : 0, 
+          });
+
         }
-
-        const data: unknown = await res.json();
-        const row = (Array.isArray(data) ? data[0] : data) as MedidorRetiradoResponse | undefined;
-
-        if (!row || typeof row !== "object") {
-          throw new Error("Respuesta invalida");
-        }
-
-        setMedidorRetirado({ 
-          codResultado: valueToString(row.codResultado),  
-          marcaMedidorRet: valueToString(row.marca_medidor),  
-          modeloMedidorRet: valueToString(row.modelo_medidor),  
-          nroMedidorRet: Number.isFinite(row.numero_medidor) ? row.numero_medidor : 0,  
-          constanteRet: Number.isFinite(row.constante) ? row.constante : 0, 
-          ultimaLectActivaRet: Number.isFinite(row.ultima_lect_activa) ? row.ultima_lect_activa : 0,  
-          lecturaTerrenoRet: Number.isFinite(row.lectura_terreno) ? row.lectura_terreno : 0,  
-          amperajeRet: valueToString(row.amperaje), 
-          descripcionVoltajeRet: valueToString(row.descripcion),  
-          claveMontriRet: valueToString(row.clave_montri),  
-          ultimaLectReacRet: Number.isFinite(row.ultima_lect_reac) ? row.ultima_lect_reac : 0,  
-          lecturaTerrenoReacRet: Number.isFinite(row.lectu_terreno_reac) ? row.lectu_terreno_reac : 0,  
-          seriePrecintoRet: valueToString(row.serie), 
-          nroPrecintoRet: Number.isFinite(row.numero_precinto) ? row.numero_precinto : 0, 
-        });
 
       } catch (e) { 
         if ((e as { name?: string } | null)?.name === "AbortError") return;

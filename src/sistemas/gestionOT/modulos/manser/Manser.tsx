@@ -778,7 +778,7 @@ function Manser({ nroMensaje }: ManserProps) {
               "Content-Type": "application/json",
               Accept: "application/json",
             },
-            body: JSON.stringify({ nroCliente: nroClienteNumber }),
+            body: JSON.stringify({ nroCliente: nroClienteNumber, nroMensaje: nroMensajeNumber }),
             signal: controller.signal,
           });
           if (!res.ok) {
@@ -816,7 +816,7 @@ function Manser({ nroMensaje }: ManserProps) {
               "Content-Type": "application/json",
               Accept: "application/json",
             },
-            body: JSON.stringify({ nroCliente: nroClienteNumber, nroMensaje: nroMensajeNumber }),
+            body: JSON.stringify({ nroCliente: nroClienteNumber }),
             signal: controller.signal,
           });
           if (!res.ok) {

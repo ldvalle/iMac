@@ -233,6 +233,7 @@ interface MedidorInstaladoValues{
     seriePrecRetira : string | null;
     nroPrecRetira : number | null;
     seriePrecColoca : string | null;
+    nroPrecColoca : number | null;
 }
 
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
@@ -439,6 +440,30 @@ const emptyMedidorRetiradoValues: MedidorRetiradoValues = {
   nroPrecintoRet: 0,
 };
 
+const emptyMedidorInstaladoValues: MedidorInstaladoValues = {
+  fechaEjecucion: "",
+  otfHoraInicio: "",
+  otfHoraFinal: "",
+  otfLectRetiro: null,
+  otfLectInstal: null,
+  lectuInstalReac: null,
+  otfMedDistinto: "",
+  otfModificaRed: "",
+  otfProyecto: "",
+  codEjecutor: "",
+  nombreEjecutor: "",
+  numeroMedAnt: null,
+  marcaMedAnt: "",
+  modeloMedAnt: "",
+  numeroMedColoca: null,
+  marcaMedColoca: "",
+  modeloMedColoca: "",
+  seriePrecRetira: "",
+  nroPrecRetira: null,
+  seriePrecColoca: "",
+  nroPrecColoca: null,
+};
+
 function valueToString(value: string | number | null | undefined) {
   return value === null || value === undefined ? "" : String(value);
 }
@@ -519,6 +544,12 @@ function Manser({ nroMensaje }: ManserProps) {
   });
   const [, setMedidorRetiradoLoading] = useState(false);
   const [, setMedidorRetiradoError] = useState<string | null>(null); 
+
+  const [medidorInstalado, setMedidorInstalado] = useState<MedidorInstaladoValues>({
+    ...emptyMedidorInstaladoValues  
+  });
+  const [, setMedidorInstaladoLoading] = useState(false);
+  const [, setMedidorInstaladoError] = useState<string | null>(null);
 
   const nroMensajeNumber = Number(nroMensaje);
   const hasValidNroMensaje = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
@@ -860,6 +891,68 @@ function Manser({ nroMensaje }: ManserProps) {
 
     void loadMedidorRetirado();
 
+    async function loadMedidorInstalado() {
+      setMedidorInstaladoLoading(true);
+      setMedidorInstaladoError(null); 
+
+      if(estadoManser.trim().toUpperCase() !== "FINALIZADO" || estadoManser.trim().toUpperCase() !== "FINALIZADA"){
+        setMedidorInstalado({ ...emptyMedidorInstaladoValues });
+        setMedidorInstaladoLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(urlBase1 + "getMedidorInstalado", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ nroMensaje: nroMensajeNumber }),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data: unknown = await res.json();
+        const row = (Array.isArray(data) ? data[0] : data) as MedidorInstaladoResponse | undefined;
+        if (!row || typeof row !== "object") {
+          throw new Error("Respuesta invalida");
+        }
+        setMedidorInstalado({ 
+          fechaEjecucion: valueToString(row.fecha_ejecucion),  
+          otfHoraInicio: valueToString(row.otf_hora_inicio),  
+          otfHoraFinal: valueToString(row.otf_hora_final),  
+          otfLectRetiro: Number.isFinite(row.otf_lect_retiro) ? row.otf_lect_retiro : null,  
+          otfLectInstal: Number.isFinite(row.otf_lect_instal) ? row.otf_lect_instal : null, 
+          lectuInstalReac: Number.isFinite(row.lectu_instal_reac) ? row.lectu_instal_reac : null,  
+          otfMedDistinto: valueToString(row.otf_med_distinto), 
+          otfModificaRed: valueToString(row.otf_modifica_red),
+          otfProyecto: valueToString(row.otf_proyecto),
+          codEjecutor: valueToString(row.cod_ejecutor),
+          nombreEjecutor: valueToString(row.nombre_ejecutor),
+          numeroMedAnt: Number.isFinite(row.numero_med_ant) ? row.numero_med_ant : null,
+          marcaMedAnt: valueToString(row.marca_med_ant),
+          modeloMedAnt: valueToString(row.modelo_med_ant),
+          numeroMedColoca: Number.isFinite(row.numero_med_coloca) ? row.numero_med_coloca : null,
+          marcaMedColoca: valueToString(row.marca_med_coloca),
+          modeloMedColoca: valueToString(row.modelo_med_coloca),
+          seriePrecRetira: valueToString(row.serie_prec_retira),
+          nroPrecRetira: Number.isFinite(row.nro_prec_retira) ? row.nro_prec_retira : null,
+          seriePrecColoca: valueToString(row.serie_prec_coloca),
+          nroPrecColoca: Number.isFinite(row.nro_prec_coloca) ? row.nro_prec_coloca : null,
+        });
+      } catch (e) {
+        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        setMedidorInstalado({ ...emptyMedidorInstaladoValues });
+        setMedidorInstaladoError("No se pudieron cargar los datos del medidor instalado");
+      } finally {
+        setMedidorInstaladoLoading(false);
+       }  
+    }
+
+    void loadMedidorInstalado();
+
     return () => controller.abort();
   }, [cabecera.nroCliente, cabeceraLoaded]);
 
@@ -993,7 +1086,7 @@ function Manser({ nroMensaje }: ManserProps) {
 
         <div className="p-4">
           {activeTab === "datosCliente" && <DatosClienteTab cliente={cliente} />}
-          {activeTab === "medidores" && <MedidoresTab medidorRetirado={medidorRetirado}/>}
+          {activeTab === "medidores" && <MedidoresTab medidorRetirado={medidorRetirado} medidorInstalado={medidorInstalado} />}
           {activeTab === "observaciones" && <ObservacionesTab />}
         </div>
       </Frame>
@@ -1069,12 +1162,12 @@ function DatosClienteTab({ cliente }: { cliente: ClienteManRetValues }) {
   );
 }
 
-function MedidoresTab({medidorRetirado}: {medidorRetirado: MedidorRetiradoValues}) {
+function MedidoresTab({medidorRetirado, medidorInstalado}: {medidorRetirado: MedidorRetiradoValues, medidorInstalado: MedidorInstaladoValues}) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_0.75fr_0.75fr_auto]">
-        <InputField id="dtFechaPuesta" legend="Fecha Puesta en Servicio" type="date" />
-        <InputField id="dtHoraInicio" legend="Hora Inicio" type="time" />
+        <InputField id="dtFechaPuesta" legend="Fecha Puesta en Servicio" type="date" value={medidorInstalado.fechaEjecucion} />
+        <InputField id="dtHoraInicio" legend="Hora Inicio" type="time" value={medidorInstalado.otfHoraInicio} />
         <InputField id="dtHoraFin" legend="Hora Fin" type="time" />
         <CheckField id="chkModifRed" legend="Modifica Red" />
       </div>

@@ -19,6 +19,7 @@ interface TextFieldProps {
   legend: string;
   type?: string;
   disabled?: boolean;
+  value?: string | number | null;
 }
 
 //-- Interface Cabecera 
@@ -287,7 +288,7 @@ function CompactField({ id, legend, value, children }: FieldProps) {
   );
 }
 
-function InputField({ id, legend, type = "text", disabled = false }: TextFieldProps) {
+function InputField({ id, legend, type = "text", disabled = false, value }: TextFieldProps) {
   return (
     <Field id={id} legend={legend}>
       <input
@@ -295,6 +296,7 @@ function InputField({ id, legend, type = "text", disabled = false }: TextFieldPr
         name={id}
         type={type}
         disabled={disabled}
+        value={value ?? ""}
         className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-xs text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70"
       />
     </Field>
@@ -332,7 +334,7 @@ function SelectField({
   );
 }
 
-function CheckField({ id, legend }: { id: string; legend: string }) {
+function CheckField({ id, legend, checked }: { id: string; legend: string; checked?: boolean }) {
   return (
     <label htmlFor={id} className="flex min-h-9 items-center gap-2 text-xs font-semibold text-text-dim">
       <span>{legend}</span>
@@ -340,17 +342,20 @@ function CheckField({ id, legend }: { id: string; legend: string }) {
         id={id}
         name={id}
         type="checkbox"
+        checked={checked}
+        readOnly={checked !== undefined}
         className="h-4 w-4 rounded border-glass-border bg-black/50 accent-accent"
       />
     </label>
   );
 }
 
-function DataGrid({ children, columns = 3 }: { children: React.ReactNode; columns?: 2 | 3 | 4 }) {
+function DataGrid({ children, columns = 3 }: { children: React.ReactNode; columns?: 2 | 3 | 4 | 5 }) {
   const columnClass = {
     2: "lg:grid-cols-2",
     3: "lg:grid-cols-3",
     4: "lg:grid-cols-4",
+    5: "lg:grid-cols-5",
   }[columns];
 
   return <div className={`grid grid-cols-1 gap-1 ${columnClass}`}>{children}</div>;
@@ -1165,11 +1170,12 @@ function DatosClienteTab({ cliente }: { cliente: ClienteManRetValues }) {
 function MedidoresTab({medidorRetirado, medidorInstalado}: {medidorRetirado: MedidorRetiradoValues, medidorInstalado: MedidorInstaladoValues}) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_0.75fr_0.75fr_auto]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_0.75fr_0.75fr_auto]" >
         <InputField id="dtFechaPuesta" legend="Fecha Puesta en Servicio" type="date" value={medidorInstalado.fechaEjecucion} />
         <InputField id="dtHoraInicio" legend="Hora Inicio" type="time" value={medidorInstalado.otfHoraInicio} />
-        <InputField id="dtHoraFin" legend="Hora Fin" type="time" />
-        <CheckField id="chkModifRed" legend="Modifica Red" />
+        <InputField id="dtHoraFin" legend="Hora Fin" type="time" value={medidorInstalado.otfHoraFinal} />
+        <CheckField id="chkModificaRed" legend="Modifica Red" checked={medidorInstalado.otfModificaRed === "S"} />
+
       </div>
 
       <Frame id="frmMedidorRetira" title="Medidor Retira" className="p-4 pt-0">
@@ -1191,27 +1197,27 @@ function MedidoresTab({medidorRetirado, medidorInstalado}: {medidorRetirado: Med
 
       <Frame id="frmMedidorInstala" title="Medidor que se Instala" className="p-4 pt-0">
         <DataGrid>
-          <Field id="lblNroMedidorInstal" legend="Número"  />
-          <Field id="lblProyecto" legend="Proyecto" />
+          <Field id="lblNroMedidorInstal" legend="Número" value={medidorInstalado.numeroMedColoca} />
+          <Field id="lblProyecto" legend="Proyecto" value={medidorInstalado.otfProyecto} />
           <EmptyCell />
-          <Field id="lblMarcaMedidorInstal" legend="Marca"  />
-          <Field id="lblRetiraInstala" legend="Retira/Instala" />
+          <Field id="lblMarcaMedidorInstal" legend="Marca" value={medidorInstalado.marcaMedColoca} />
+          <Field id="lblRetiraInstala" legend="Retira/Instala" value={medidorInstalado.codEjecutor + ' - ' + medidorInstalado.nombreEjecutor} />
           <EmptyCell />
-          <Field id="lblModeloMedidorInstal" legend="Modelo"  />
-          <Field id="lblLecturaInstalActiva" legend="Lect.Instal.Activa"  />
+          <Field id="lblModeloMedidorInstal" legend="Modelo" value={medidorInstalado.modeloMedColoca} />
+          <Field id="lblLecturaInstalActiva" legend="Lect.Instal.Activa" value={medidorInstalado.otfLectInstal} />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <CompactField id="lblLecturaInstalReactiva" legend="Lect.Instal.React."  />
-            <CompactField id="lblPrecintoInstal" legend="Precinto"  />
+            <CompactField id="lblLecturaInstalReactiva" legend="Lect.Instal.React." value={medidorInstalado.lectuInstalReac} />
+            <CompactField id="lblPrecintoInstal" legend="Precinto" value={medidorInstalado.seriePrecColoca + '-' + medidorInstalado.nroPrecintoColoca} />
           </div>
         </DataGrid>
       </Frame>
 
       <Frame id="frmMedidorDistinto" className="px-4 py-3">
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-[auto_1fr_1fr_1fr]">
-          <CheckField id="chkMedDistinto" legend="Medidor Distinto" />
-          <Field id="lblNroMedDistinto" legend="Número" />
-          <Field id="lblMarcaMedDistinto" legend="Marca" />
-          <Field id="lblModeloDistinto" legend="Modelo" />
+          <CheckField id="chkMedDistinto" legend="Medidor Distinto" checked={medidorInstalado.otfMedDistinto === 'S'} />
+          <Field id="lblNroMedDistinto" legend="Número" value={medidorInstalado.otfNroMedDistinto} />
+          <Field id="lblMarcaMedDistinto" legend="Marca" value={medidorInstalado.otfMarcaMedDistinto} />
+          <Field id="lblModeloDistinto" legend="Modelo" value={medidorInstalado.otfModeloMedDistinto} />
         </div>
       </Frame>
     </div>

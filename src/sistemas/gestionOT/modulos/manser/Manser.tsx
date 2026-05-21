@@ -237,6 +237,12 @@ interface MedidorInstaladoValues{
     nroPrecColoca : number | null;
 }
 
+interface ObservacionValues {
+  pagina: number;
+  texton: string;
+}
+
+
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
 
 function Frame({ id, title, children, className = "" }: { id: string; title?: string; children: React.ReactNode; className?: string }) {
@@ -555,6 +561,11 @@ function Manser({ nroMensaje }: ManserProps) {
   });
   const [, setMedidorInstaladoLoading] = useState(false);
   const [, setMedidorInstaladoError] = useState<string | null>(null);
+
+  const [observaciones, setObservaciones] = useState<ObservacionValues[]>([]);
+  const [observacionesLoading, setObservacionesLoading] = useState(false);
+  const [observacionesLoaded, setObservacionesLoaded] = useState(false);
+  const [observacionesError, setObservacionesError] = useState<string | null>(null);  
 
   const nroMensajeNumber = Number(nroMensaje);
   const hasValidNroMensaje = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
@@ -958,6 +969,45 @@ function Manser({ nroMensaje }: ManserProps) {
 
     void loadMedidorInstalado();
 
+    async function loadObservaciones() {
+      setObservacionesLoading(true);
+      setObservacionesError(null);
+      try {
+        const res = await fetch(urlBase1 + "getTexton", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ nroMensaje: nroMensajeNumber }),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data: unknown = await res.json();
+        const rows = Array.isArray(data) ? data : [data];
+        setObservaciones(rows.map((item) => {
+          const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
+          const pagina = Number(row.pagina);
+
+          return {
+            pagina: Number.isFinite(pagina) ? pagina : 0,
+            texton: valueToString(row.texton as string | number | null | undefined),
+          };
+        }));
+      } catch (e) {
+        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        setObservaciones([]);
+        setObservacionesError("No se pudieron cargar las observaciones");
+      } finally {
+        setObservacionesLoading(false);
+        setObservacionesLoaded(true);
+      }
+    }
+
+    void loadObservaciones();
+
     return () => controller.abort();
   }, [cabecera.nroCliente, cabeceraLoaded]);
 
@@ -1092,7 +1142,14 @@ function Manser({ nroMensaje }: ManserProps) {
         <div className="p-4">
           {activeTab === "datosCliente" && <DatosClienteTab cliente={cliente} />}
           {activeTab === "medidores" && <MedidoresTab medidorRetirado={medidorRetirado} medidorInstalado={medidorInstalado} />}
-          {activeTab === "observaciones" && <ObservacionesTab />}
+          {activeTab === "observaciones" && (
+            <ObservacionesTab
+              observaciones={observaciones}
+              loading={observacionesLoading}
+              loaded={observacionesLoaded}
+              error={observacionesError}
+            />
+          )}
         </div>
       </Frame>
       </div>
@@ -1224,7 +1281,22 @@ function MedidoresTab({medidorRetirado, medidorInstalado}: {medidorRetirado: Med
   );
 }
 
-function ObservacionesTab() {
+function ObservacionesTab({
+  observaciones,
+  loading,
+  loaded,
+  error,
+}: {
+  observaciones: ObservacionValues[];
+  loading: boolean;
+  loaded: boolean;
+  error: string | null;
+}) {
+  const textonOld = [...observaciones]
+    .sort((a, b) => a.pagina - b.pagina)
+    .map((observacion) => observacion.texton)
+    .join("\n");
+
   return (
     <Frame id="frmObservaciones" className="h-[28rem] p-4">
       <div className="grid h-full grid-rows-[7fr_3fr] gap-3">
@@ -1232,6 +1304,7 @@ function ObservacionesTab() {
           id="txtTextonOld"
           name="txtTextonOld"
           disabled
+          value={loading ? "Cargando observaciones..." : error ?? (loaded ? textonOld : "")}
           className="min-h-0 resize-none rounded-md border border-glass-border bg-black/30 p-3 text-sm text-text-bright disabled:opacity-80"
         />
         <textarea

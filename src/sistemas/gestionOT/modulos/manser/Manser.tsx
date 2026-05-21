@@ -1,4 +1,5 @@
 import { number } from "motion";
+import { tr } from "motion/react-client";
 import React, { useEffect, useState } from "react";
 
 type TabKey = "datosCliente" | "medidores" | "observaciones";
@@ -236,12 +237,6 @@ interface MedidorInstaladoValues{
     seriePrecColoca : string | null;
     nroPrecColoca : number | null;
 }
-
-interface ObservacionValues {
-  pagina: number;
-  texton: string;
-}
-
 
 const urlBase1 = "http://localhost:8210/iMacSrv/gestionOT/";
 
@@ -562,7 +557,13 @@ function Manser({ nroMensaje }: ManserProps) {
   const [, setMedidorInstaladoLoading] = useState(false);
   const [, setMedidorInstaladoError] = useState<string | null>(null);
 
+  /*
   const [observaciones, setObservaciones] = useState<ObservacionValues[]>([]);
+  const [observacionesLoading, setObservacionesLoading] = useState(false);
+  const [observacionesLoaded, setObservacionesLoaded] = useState(false);
+  const [observacionesError, setObservacionesError] = useState<string | null>(null);  
+*/
+  const [observaciones, setObservaciones] = useState<String>(null);
   const [observacionesLoading, setObservacionesLoading] = useState(false);
   const [observacionesLoaded, setObservacionesLoaded] = useState(false);
   const [observacionesError, setObservacionesError] = useState<string | null>(null);  
@@ -969,6 +970,7 @@ function Manser({ nroMensaje }: ManserProps) {
 
     void loadMedidorInstalado();
 
+/*    
     async function loadObservaciones() {
       setObservacionesLoading(true);
       setObservacionesError(null);
@@ -999,6 +1001,36 @@ function Manser({ nroMensaje }: ManserProps) {
       } catch (e) {
         if ((e as { name?: string } | null)?.name === "AbortError") return;
         setObservaciones([]);
+        setObservacionesError("No se pudieron cargar las observaciones");
+      } finally {
+        setObservacionesLoading(false);
+        setObservacionesLoaded(true);
+      }
+    }
+*/
+
+    async function loadObservaciones() {
+      setObservacionesLoading(true);
+      setObservacionesError(null);
+      try {
+        const res = await fetch(urlBase1 + "getObservaTexton", {
+          method: "POST", 
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",   
+          },
+          body: JSON.stringify({ nroMensaje: nroMensajeNumber, procedimiento: "MANSER" }),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data: unknown = await res.text();
+        const texton = data;
+        setObservaciones(texton);
+      } catch (e) {
+        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        setObservaciones(null);
         setObservacionesError("No se pudieron cargar las observaciones");
       } finally {
         setObservacionesLoading(false);
@@ -1287,16 +1319,12 @@ function ObservacionesTab({
   loaded,
   error,
 }: {
-  observaciones: ObservacionValues[];
+  observaciones: string | null;
   loading: boolean;
   loaded: boolean;
   error: string | null;
 }) {
-  const textonOld = [...observaciones]
-    .sort((a, b) => a.pagina - b.pagina)
-    .map((observacion) => observacion.texton)
-    .join("\n");
-
+  const textonOld = observaciones;
   return (
     <Frame id="frmObservaciones" className="h-[28rem] p-4">
       <div className="grid h-full grid-rows-[7fr_3fr] gap-3">

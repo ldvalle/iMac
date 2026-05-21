@@ -1072,7 +1072,19 @@ function Manser({ nroMensaje }: ManserProps) {
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
       <Frame id="frmDataBase" className="px-4 py-4">
         <DataGrid>
-          <Field id="lblNroOperacion" legend="Nro.Operación" value={cabecera.nroMensaje} />
+          <Field id="lblNroOperacion" legend="Nro.Operación" >
+            <div className="grid grid-cols-[1fr_3.25rem] gap-2">
+              <input 
+                id="txtNroOperacion"
+                name="txtNroOperacion"
+                type="number"
+                maxLength={10}  
+                value={cabecera.nroMensaje}
+                style={{width: "170px"}}
+                className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70"
+              />  
+            </div>
+          </Field>
           <Field id="lblEtapaOperacion" legend="Etapa" value={cabecera.etapaOperacion} />
           <Field id="dtFechaVto" legend="Vencimiento">
             <input

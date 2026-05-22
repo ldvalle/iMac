@@ -20,9 +20,11 @@ interface MiEscritorioProps {
 }
 
 type MenuModulo = 'miEscritorio' | 'manser';
+type ManserOrigenApertura = 'menu' | 'grilla';
 
 const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
   const [activeMenuModulo, setActiveMenuModulo] = useState<MenuModulo>('miEscritorio');
+  const [manserOrigen, setManserOrigen] = useState<ManserOrigenApertura>('menu');
   const [roles, setRoles] = useState<string[]>([]);
   const [selectedRol, setSelectedRol] = useState<string>('');
   const [tareas, setTareas] = useState<Tarea[]>([]);
@@ -95,6 +97,13 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
     if (tarea.proced.trim().toUpperCase() !== 'MANSER') return;
 
     setSelectedNroMensaje(tarea.mensaje);
+    setManserOrigen('grilla');
+    setActiveMenuModulo('manser');
+  };
+
+  const handleAbrirManserMenu = () => {
+    setSelectedNroMensaje('');
+    setManserOrigen('menu');
     setActiveMenuModulo('manser');
   };
 
@@ -104,7 +113,7 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
         <nav className="flex items-center gap-2 rounded-lg bg-glass border border-glass-border backdrop-blur-sm px-3 py-2">
           <button
             type="button"
-            onClick={() => setActiveMenuModulo('manser')}
+            onClick={handleAbrirManserMenu}
             className="rounded-md px-4 py-2 text-sm font-semibold text-text-dim transition-all hover:bg-white/10 hover:text-white"
           >
             Manser
@@ -118,7 +127,9 @@ const MiEscritorio: React.FC<MiEscritorioProps> = ({ authenticatedRole }) => {
         </nav>
       )}
 
-      {activeMenuModulo === 'manser' && <Manser nroMensaje={selectedNroMensaje} />}
+      {activeMenuModulo === 'manser' && (
+        <Manser nroMensaje={selectedNroMensaje} origenApertura={manserOrigen} />
+      )}
       {activeMenuModulo === 'miEscritorio' && (
         <>
       {/* Frame 1: Rol Activo y botón Leer */}

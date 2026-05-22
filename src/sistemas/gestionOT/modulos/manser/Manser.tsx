@@ -4,8 +4,12 @@ import React, { useEffect, useState } from "react";
 
 type TabKey = "datosCliente" | "medidores" | "observaciones";
 
+type ManserOrigenApertura = "menu" | "grilla";
+
 interface ManserProps {
   nroMensaje?: number | string;
+  /** 'grilla': doble clic en Mi Escritorio; 'menu': botón Manser */
+  origenApertura?: ManserOrigenApertura;
 }
 
 interface FieldProps {
@@ -524,7 +528,8 @@ function combineSucursal(sucursal: string | number | null | undefined, nombreSuc
   return codigo || nombre;
 }
 
-function Manser({ nroMensaje }: ManserProps) {
+function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
+  const bloquearEntradaManual = origenApertura === "grilla";
   const [activeTab, setActiveTab] = useState<TabKey>("datosCliente");
   const [motivos, setMotivos] = useState<Array<{ codigo: string; descripcion: string; valor_alf: string }>>([]);
   const [motivosLoading, setMotivosLoading] = useState(false);
@@ -1080,8 +1085,9 @@ function Manser({ nroMensaje }: ManserProps) {
                 type="number"
                 maxLength={10}  
                 value={cabecera.nroMensaje}
+                disabled={bloquearEntradaManual}
                 style={{width: "170px"}}
-                className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70"
+                className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70 disabled:cursor-not-allowed"
               />  
             </div>
           </Field>
@@ -1112,8 +1118,9 @@ function Manser({ nroMensaje }: ManserProps) {
                 style={{width: "170px"}}
                 step="1"
                 value={cabecera.nroCliente}
+                disabled={bloquearEntradaManual}
                 onChange={(e) => setCabecera((current) => ({ ...current, nroCliente: e.target.value }))}
-                className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20"
+                className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70 disabled:cursor-not-allowed"
               />
               <span
                 id="lblDigVerifCliente"
@@ -1210,7 +1217,8 @@ function Manser({ nroMensaje }: ManserProps) {
               id={id}
               key={id}
               type="button"
-              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-black transition-all hover:bg-accent/90"
+              disabled={id === "cmdLeer" && bloquearEntradaManual}
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-black transition-all hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {label}
             </button>

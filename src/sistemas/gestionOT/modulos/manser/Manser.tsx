@@ -1,6 +1,6 @@
 import { number } from "motion";
 import { tr } from "motion/react-client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 type TabKey = "datosCliente" | "medidores" | "observaciones";
 
@@ -562,19 +562,21 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
   const [, setMedidorInstaladoLoading] = useState(false);
   const [, setMedidorInstaladoError] = useState<string | null>(null);
 
-  /*
-  const [observaciones, setObservaciones] = useState<ObservacionValues[]>([]);
-  const [observacionesLoading, setObservacionesLoading] = useState(false);
-  const [observacionesLoaded, setObservacionesLoaded] = useState(false);
-  const [observacionesError, setObservacionesError] = useState<string | null>(null);  
-*/
   const [observaciones, setObservaciones] = useState<String>(null);
   const [observacionesLoading, setObservacionesLoading] = useState(false);
   const [observacionesLoaded, setObservacionesLoaded] = useState(false);
   const [observacionesError, setObservacionesError] = useState<string | null>(null);  
 
-  const nroMensajeNumber = Number(nroMensaje);
-  const hasValidNroMensaje = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
+  const nroMensajePropNumber = Number(nroMensaje);
+  const hasValidNroMensaje = Number.isFinite(nroMensajePropNumber) && nroMensajePropNumber > 0;
+  const cargaAbortRef = useRef<AbortController | null>(null);
+
+  const iniciarCarga = useCallback(() => {
+    cargaAbortRef.current?.abort();
+    const controller = new AbortController();
+    cargaAbortRef.current = controller;
+    return controller.signal;
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -641,12 +643,8 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
   }, [nroMensaje]);
 
 
-  useEffect(() => {
-    if (!hasValidNroMensaje || motivosLoading || !motivosLoaded) return;
-
-    const controller = new AbortController();
-
-    async function loadCabecera() {
+  const loadCabecera = useCallback(
+    async (nroMensajeNumber: number, signal: AbortSignal) => {
       setCabeceraLoading(true);
       setCabeceraLoaded(false);
       setCabeceraError(null);
@@ -659,7 +657,7 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
             Accept: "application/json",
           },
           body: JSON.stringify({ nroMensaje: nroMensajeNumber }),
-          signal: controller.signal,
+          signal,
         });
 
         if (!res.ok) {
@@ -680,7 +678,14 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
             nroMensaje: row.mensaje_xnear == null ? current.nroMensaje : valueToString(row.mensaje_xnear),
             nroOrden: row.numero_orden == null ? current.nroOrden : valueToString(row.numero_orden),
             etapaOperacion: row.etapa == null ? current.etapaOperacion : valueToString(row.etapa),
-            fechaOperacion: row.fecha_creacion == null ? current.fechaOperacion : new Date(row.fecha_creacion).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }),
+            fechaOperacion:
+              row.fecha_creacion == null
+                ? current.fechaOperacion
+                : new Date(row.fecha_creacion).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }),
             rolCreacion: row.rol_creacion == null ? current.rolCreacion : valueToString(row.rol_creacion),
             rolActual: row.rol_actual == null ? current.rolActual : valueToString(row.rol_actual),
             areaEmisora: row.area == null ? current.areaEmisora : valueToString(row.area),
@@ -696,35 +701,27 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
         });
         setCabeceraLoaded(true);
 
+        const nroClienteNumber = row.numero_cliente == null ? 0 : Number(row.numero_cliente);
+        const estadoManser = row.etapa == null ? "" : valueToString(row.etapa);
+
+        return {
+          nroMensajeNumber,
+          nroClienteNumber: Number.isFinite(nroClienteNumber) ? nroClienteNumber : 0,
+          estadoManser,
+        };
       } catch (e) {
-        if ((e as { name?: string } | null)?.name === "AbortError") return;
+        if ((e as { name?: string } | null)?.name === "AbortError") return null;
         setCabeceraError("No se pudo cargar la cabecera");
         setCabeceraLoaded(false);
+        return null;
       } finally {
         setCabeceraLoading(false);
       }
-    }
+    },
+    [motivos],
+  );
 
-    void loadCabecera();
-
-    return () => controller.abort();
-  }, [hasValidNroMensaje, motivos, motivosLoaded, motivosLoading, nroMensajeNumber]);
-
-  useEffect(() => {
-    if (!cabeceraLoaded) return;
-
-    const nroMensajeNumber = Number(cabecera.nroMensaje);
-    const nroClienteNumber = Number(cabecera.nroCliente);
-    const estadoManser = String(cabecera.etapaOperacion);
-
-    if (!Number.isFinite(nroClienteNumber) || nroClienteNumber <= 0) {
-      setCliente({ ...emptyClienteValues });
-      return;
-    }
-
-    const controller = new AbortController();
-
-    async function loadCliente() {
+  const loadCliente = useCallback(async (nroClienteNumber: number, signal: AbortSignal) => {
       setClienteLoading(true);
       setClienteError(null);
 
@@ -736,7 +733,7 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
             Accept: "application/json",
           },
           body: JSON.stringify({ nroCliente: nroClienteNumber }),
-          signal: controller.signal,
+          signal,
         });
 
         if (!res.ok) {
@@ -801,30 +798,27 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
       } finally {
         setClienteLoading(false);
       }
-    }
+  }, []);
 
-    void loadCliente();
-
-    async function loadMedidorRetirado() {
+  const loadMedidorRetirado = useCallback(
+    async (
+      params: { nroMensajeNumber: number; nroClienteNumber: number; estadoManser: string },
+      signal: AbortSignal,
+    ) => {
+      const { nroMensajeNumber, nroClienteNumber, estadoManser } = params;
       setMedidorRetiradoLoading(true);
       setMedidorRetiradoError(null);
 
-      let endPointMedidorRetirado = "";
-      var sJson;
-
-      if(estadoManser.trim().toUpperCase() === "FINALIZADO" || estadoManser.trim().toUpperCase() === "FINALIZADA"){
-        endPointMedidorRetirado = "getMedidorRetirado";
-        //sJson = JSON.stringify({ nroMensaje: nroMensajeNumber, nroCliente: nroClienteNumber });
-        sJson = { nroMensaje: nroMensajeNumber, nroCliente: nroClienteNumber };
-      }else{
-        endPointMedidorRetirado = "getMedidorClienteManRet";
-        //sJson = JSON.stringify({ nroMensaje: nroMensajeNumber });
-        sJson = { nroMensaje: nroMensajeNumber };
-      }
+      const endPointMedidorRetirado =
+        estadoManser.trim().toUpperCase() === "FINALIZADO" || estadoManser.trim().toUpperCase() === "FINALIZADA"
+          ? "getMedidorRetirado"
+          : "getMedidorClienteManRet";
 
       try {
-
-        if(estadoManser.trim().toUpperCase() === "FINALIZADO" || estadoManser.trim().toUpperCase() === "FINALIZADA"){
+        if (
+          estadoManser.trim().toUpperCase() === "FINALIZADO" ||
+          estadoManser.trim().toUpperCase() === "FINALIZADA"
+        ) {
           const res = await fetch(urlBase1 + endPointMedidorRetirado, {
             method: "POST",
             headers: {
@@ -832,7 +826,7 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
               Accept: "application/json",
             },
             body: JSON.stringify({ nroCliente: nroClienteNumber, nroMensaje: nroMensajeNumber }),
-            signal: controller.signal,
+            signal,
           });
           if (!res.ok) {
             throw new Error(`HTTP ${res.status}`);
@@ -870,7 +864,7 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
               Accept: "application/json",
             },
             body: JSON.stringify({ nroCliente: nroClienteNumber }),
-            signal: controller.signal,
+            signal,
           });
           if (!res.ok) {
             throw new Error(`HTTP ${res.status}`);
@@ -909,29 +903,34 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
       } finally {
         setMedidorRetiradoLoading(false);
       }
-    }
+    },
+    [],
+  );
 
-    void loadMedidorRetirado();
-
-    async function loadMedidorInstalado() {
+  const loadMedidorInstalado = useCallback(
+    async (nroMensajeNumber: number, nroClienteNumber: number, estadoManser: string, signal: AbortSignal) => {
       setMedidorInstaladoLoading(true);
-      setMedidorInstaladoError(null); 
+      setMedidorInstaladoError(null);
 
-      if(estadoManser.trim().toUpperCase() !== "FINALIZADO" || estadoManser.trim().toUpperCase() !== "FINALIZADA"){
+      if (
+        estadoManser.trim().toUpperCase() !== "FINALIZADO" &&
+        estadoManser.trim().toUpperCase() !== "FINALIZADA"
+      ) {
         setMedidorInstalado({ ...emptyMedidorInstaladoValues });
         setMedidorInstaladoLoading(false);
         return;
       }
 
       try {
-        const res = await fetch(urlBase1 + "getMedidorInstalado", {
+        //const res = await fetch(urlBase1 + "getMedidorInstalado", {
+        const res = await fetch(urlBase1 + "getManserFinal", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ nroMensaje: nroMensajeNumber }),
-          signal: controller.signal,
+          body: JSON.stringify({ nroMensaje: nroMensajeNumber, nroCliente: nroClienteNumber }),
+          signal,
         });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
@@ -970,83 +969,116 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
         setMedidorInstaladoError("No se pudieron cargar los datos del medidor instalado");
       } finally {
         setMedidorInstaladoLoading(false);
-       }  
-    }
-
-    void loadMedidorInstalado();
-
-/*    
-    async function loadObservaciones() {
-      setObservacionesLoading(true);
-      setObservacionesError(null);
-      try {
-        const res = await fetch(urlBase1 + "getTexton", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ nroMensaje: nroMensajeNumber }),
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const data: unknown = await res.json();
-        const rows = Array.isArray(data) ? data : [data];
-        setObservaciones(rows.map((item) => {
-          const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
-          const pagina = Number(row.pagina);
-
-          return {
-            pagina: Number.isFinite(pagina) ? pagina : 0,
-            texton: valueToString(row.texton as string | number | null | undefined),
-          };
-        }));
-      } catch (e) {
-        if ((e as { name?: string } | null)?.name === "AbortError") return;
-        setObservaciones([]);
-        setObservacionesError("No se pudieron cargar las observaciones");
-      } finally {
-        setObservacionesLoading(false);
-        setObservacionesLoaded(true);
       }
-    }
-*/
+    },
+    [],
+  );
 
-    async function loadObservaciones() {
-      setObservacionesLoading(true);
-      setObservacionesError(null);
-      try {
-        const res = await fetch(urlBase1 + "getObservaTexton", {
-          method: "POST", 
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",   
-          },
-          body: JSON.stringify({ nroMensaje: nroMensajeNumber, procedimiento: "MANSER" }),
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const data: unknown = await res.text();
-        const texton = data;
-        setObservaciones(texton);
-      } catch (e) {
-        if ((e as { name?: string } | null)?.name === "AbortError") return;
-        setObservaciones(null);
-        setObservacionesError("No se pudieron cargar las observaciones");
-      } finally {
-        setObservacionesLoading(false);
-        setObservacionesLoaded(true);
+  const loadObservaciones = useCallback(async (nroMensajeNumber: number, signal: AbortSignal) => {
+    setObservacionesLoading(true);
+    setObservacionesError(null);
+    try {
+      const res = await fetch(urlBase1 + "getObservaTexton", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ nroMensaje: nroMensajeNumber, procedimiento: "MANSER" }),
+        signal,
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data: unknown = await res.text();
+      setObservaciones(data as string);
+    } catch (e) {
+      if ((e as { name?: string } | null)?.name === "AbortError") return;
+      setObservaciones(null);
+      setObservacionesError("No se pudieron cargar las observaciones");
+    } finally {
+      setObservacionesLoading(false);
+      setObservacionesLoaded(true);
+    }
+  }, []);
+
+  const ejecutarCargaPorMensaje = useCallback(
+    async (nroMensajeNumber: number) => {
+      const signal = iniciarCarga();
+      const cabeceraDatos = await loadCabecera(nroMensajeNumber, signal);
+      if (!cabeceraDatos) return;
+
+      const { nroClienteNumber, estadoManser } = cabeceraDatos;
+      const cargas: Promise<void>[] = [
+        loadMedidorRetirado({ nroMensajeNumber, nroClienteNumber, estadoManser }, signal),
+        loadMedidorInstalado(nroMensajeNumber, estadoManser, signal),
+        loadObservaciones(nroMensajeNumber, signal),
+      ];
+
+      if (nroClienteNumber > 0) {
+        cargas.unshift(loadCliente(nroClienteNumber, signal));
+      } else {
+        setCliente({ ...emptyClienteValues });
+      }
+
+      await Promise.all(cargas);
+    },
+    [iniciarCarga, loadCabecera, loadCliente, loadMedidorRetirado, loadMedidorInstalado, loadObservaciones],
+  );
+
+  const ejecutarCargaPorCliente = useCallback(
+    async (nroClienteNumber: number) => {
+      const signal = iniciarCarga();
+      setCabecera((current) => ({ ...current, nroCliente: valueToString(nroClienteNumber) }));
+
+      const nroMensajeNumber = Number(cabecera.nroMensaje);
+      const estadoManser = cabecera.etapaOperacion;
+      const nroMensajeValido = Number.isFinite(nroMensajeNumber) && nroMensajeNumber > 0;
+
+      await Promise.all([
+        loadCliente(nroClienteNumber, signal),
+        loadMedidorRetirado(
+          {
+            nroMensajeNumber: nroMensajeValido ? nroMensajeNumber : 0,
+            nroClienteNumber,
+            estadoManser,
+          },
+          signal,
+        ),
+      ]);
+    },
+    [cabecera.etapaOperacion, cabecera.nroMensaje, iniciarCarga, loadCliente, loadMedidorRetirado],
+  );
+
+  const handleCmdLeer = useCallback(() => {
+    const nroOperacion = Number(cabecera.nroMensaje);
+    const nroCliente = Number(cabecera.nroCliente);
+
+    if (Number.isFinite(nroOperacion) && nroOperacion > 0) {
+      void ejecutarCargaPorMensaje(nroOperacion);
+      return;
     }
 
-    void loadObservaciones();
+    if (Number.isFinite(nroCliente) && nroCliente > 0) {
+      void ejecutarCargaPorCliente(nroCliente);
+    }
+  }, [cabecera.nroCliente, cabecera.nroMensaje, ejecutarCargaPorCliente, ejecutarCargaPorMensaje]);
 
-    return () => controller.abort();
-  }, [cabecera.nroCliente, cabeceraLoaded]);
+  useEffect(() => {
+    if (!bloquearEntradaManual || !hasValidNroMensaje || motivosLoading || !motivosLoaded) return;
+    void ejecutarCargaPorMensaje(nroMensajePropNumber);
+  }, [
+    bloquearEntradaManual,
+    ejecutarCargaPorMensaje,
+    hasValidNroMensaje,
+    motivosLoaded,
+    motivosLoading,
+    nroMensajePropNumber,
+  ]);
+
+  useEffect(() => {
+    return () => cargaAbortRef.current?.abort();
+  }, []);
 
   return (
     <div className="flex h-full min-h-0 flex-col space-y-4">
@@ -1086,6 +1118,7 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
                 maxLength={10}  
                 value={cabecera.nroMensaje}
                 disabled={bloquearEntradaManual}
+                onChange={(e) => setCabecera((current) => ({ ...current, nroMensaje: e.target.value }))}
                 style={{width: "170px"}}
                 className="min-h-9 rounded-md border border-glass-border bg-black/50 px-3 py-2 text-sm text-text-bright transition-all focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-70 disabled:cursor-not-allowed"
               />  
@@ -1218,6 +1251,7 @@ function Manser({ nroMensaje, origenApertura = "menu" }: ManserProps) {
               key={id}
               type="button"
               disabled={id === "cmdLeer" && bloquearEntradaManual}
+              onClick={id === "cmdLeer" ? handleCmdLeer : undefined}
               className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-black transition-all hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {label}
